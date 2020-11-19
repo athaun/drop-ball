@@ -1,13 +1,13 @@
 // Started - 08/29/2019 (actually 07/08/2018, but I scrapped the old code)
-// finished - 
+// finished -
 
-/** 
-TODO: 
+/**
+TODO:
 - fix controller bugs
 - add explosion (done)
-- fine tune gameplay/GUIs 
+- fine tune gameplay/GUIs
 - add powerups
-- fix replay bug 
+- fix replay bug
 - add options screen
 - add skins
 - fix wall collisions
@@ -19,7 +19,7 @@ TODO:
 
 /* Setup */
 smooth(); // for Firefox users
-textFont(createFont("cursive"), 20);// sadly not availabe on all operating systems
+textFont(createFont("tahoma bold"), 20);// sadly not availabe on all operating systems
 textAlign(CENTER, CENTER);
 frameRate(60);
 
@@ -31,10 +31,10 @@ var score = 1;
 var pauseGame = false;
 var playGame = false;
 var playSounds = true;
-var upTime = millis();// used to increase score??? (find out)
+var upTime = 0;
 var beginGameTime = 0;// the millis() that the game began
 
-var character = {
+var Player = {
     x: 200,
     y: 200,
     w: 16,
@@ -45,11 +45,29 @@ var character = {
     speed: 1.04,
     gravity: 4,
     shield: false,
-    shieldTime: 7
+    shieldTime: 8
 }; //the properties of the player
 
+/* Effects */
+var screenshake = {
+    x: 0,
+    y: 0,
+    count: 0
+};
+function screenshaker () {
+    screenshake.x = random(-10, 10);
+    screenshake.y = random(-10, 10);
+
+    screenshake.count -= 0.1;
+
+    if (screenshake.count < 1) {
+        screenshake.x = 0;
+        screenshake.y = 0;
+    }
+}
+
 // Used in the powerups for the wavy motion
-var oscillate = function (period, amplitude) {
+function oscillate (period, amplitude) {
     // oscillation adapted from Dan Shiffman, natureofcode.com
     angleMode = "radians";
     // period: length of one period in frames
@@ -57,17 +75,17 @@ var oscillate = function (period, amplitude) {
     var x = amplitude * sin(TWO_PI * frameCount / period);
     angleMode = "degrees";
     return x;
-};
+}
 
 /* Walls */
 var distBtwnWalls = 100;
 var scrollSpeed = 1; // Controlling the amount it scrolls
 var walls = []; // new wall objects are pushed to this array and then drawn from it using a for()
-var numberWalls = 0;// total number of walls that currently exist
-var createWall = function(Y) {
+var numberWalls = 0; // total number of walls that currently exist
+function createWall (Y) {
     var wall = {};
-    // picks how many holes there are in each wall (slight bias towards single holed walls)
-    var oneHole = round(random(0, 3));
+    // picks how many holes there are in each wall
+    var oneHole = round(random(0, 1.4));
     // If two holes
     if (oneHole === 0) {
         // Randomize the two hole centers and sizes
@@ -79,14 +97,14 @@ var createWall = function(Y) {
         wall.numberOfLines = 3;
         wall.startx = [];
         wall.endx = [];
-        // 0<-line0->hole0<-line1->hole1<-line2->400
-        wall.startx[0] = -155;
+        // 0<-line0->hole0<-line1->hole1<-line2->width
+        wall.startx[0] = -100;
 
         wall.endx[0] = hole0Center - hole0Width / 2;
         wall.startx[1] = hole0Center + hole0Width / 2;
         wall.endx[1] = hole1Center - hole1Width / 2;
         wall.startx[2] = hole1Center + hole1Width / 2;
-        wall.endx[2] = 400;
+        wall.endx[2] = width;
     } else {
         var holeCenter = random(0, 400);
         var holeWidth = random(50, 100);
@@ -95,16 +113,16 @@ var createWall = function(Y) {
         wall.numberOfLines = 2;
         wall.startx = [];
         wall.endx = [];
-        wall.startx[0] = 0;
+        wall.startx[0] = -100;
         wall.endx[0] = holeCenter - holeWidth / 2;
         wall.startx[1] = holeCenter + holeWidth / 2;
-        wall.endx[1] = 400;
+        wall.endx[1] = 500;
     }
     // Y is same for any count of holes
     wall.Y = Y;
     return (wall);
-}; // creating the walls
-var drawWall = function(wallData) {
+}
+function drawWall (wallData) {
 
     stroke(255, 255, 255);
     noStroke();
@@ -114,39 +132,19 @@ var drawWall = function(wallData) {
     }
 
     wallData.Y -= scrollSpeed;
-}; // Actaully DRAWING the walls
+}
 
 /* GUI */
 
-var screenshake = {
-    x: 0,
-    y: 0,
-    count: 0
-};
 var opacity = 1.1; // 1.1
-var initialOpacity = 330;
-var textYPos = 1.1;// for the "Drop Ball" text animation in the main menu
-var gotoMenu = false;
-var transitionOpacity = 0;
-var transitionStage = 1;
-var transitionSpeed = 1.26;
-var drawMenuButtons = false;
-var options = false;
-var optionsOpacity = 1.1;
 
-var screenshaker = function () {
-    screenshake.x = random(-10, 10);
-    screenshake.y = random(-10, 10);
-    
-    screenshake.count -= 0.1;
-    
-    if (screenshake.count < 1) {
-        screenshake.x = 0;
-        screenshake.y = 0;
-    }
-};
+function transition (nextScene) {
 
-var back_ground = function() {
+} // smoothly transition from scene to scene with fade
+
+
+
+var backgroundScroll = function() {
     var collided = false;
     background(77, 67, 140);
     for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
@@ -162,10 +160,10 @@ var back_ground = function() {
         walls[numberWalls - 1] = createWall(walls[numberWalls - 2].Y + distBtwnWalls);
     }
     noStroke();
-};// simulated gameplay (walls moving up) but without the character or rockets
+};// simulated gameplay (walls moving up) but without the Player or rockets
 var text3D = function(text_, size, xpos, ypos) {
     textAlign(CENTER, CENTER);
-    textFont(createFont("cursive"), size);
+    textSize(size);
     fill(46, 43, 64, opacity);
     text(text_, xpos + 2, ypos);
     text(text_, xpos, ypos + 2);
@@ -177,27 +175,12 @@ var text3D = function(text_, size, xpos, ypos) {
     //text(text_,xpos,ypos);
 };// gives text a "3D"/dropshadow look
 
-var logoScroll = height + 30;
-
 var logo = function() {
-    
-    back_ground();
 
-    initialOpacity -= 0.5;
-    fill(0, 0, 0, initialOpacity);
-    rect(0, 0, width, height);
-    fill(77, 67, 140, initialOpacity);
+    scene = "menu";
 
-    if (initialOpacity <= 3) {
-        opacity *= 1.06;
-        text3D("Drop\nBall", 90, 200, 200);
-        if (opacity > 500) {
-            scene = "menu";
-        }
-    } else {
-        logoScroll -= scrollSpeed;
-        text("Disco Nugget Development\nPresents...", 200, logoScroll);
-    }
+    text("Disco Nugget Development\nAnd\nIsaac Emerald\nPresent...", 200, height/2);
+
 };// initial splashscreen/logo
 var Button = function(X, Y, Width, Height, Text) {
 
@@ -226,7 +209,7 @@ var Button = function(X, Y, Width, Height, Text) {
                 this.pressed = false;
             }
             this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
-            
+
         } else {
             this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
             this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
@@ -242,7 +225,7 @@ var Button = function(X, Y, Width, Height, Text) {
     };
 
 };// button class used throughout game button elements
-var switchBtnColor = color(130, 0, 0);// default highlight color for all switch buttons
+var switchBtnColor = color(152, 137, 250);// default highlight color for all switch buttons
 var Switch = function(X, Y, defaultState) {
     this.x = X;
     this.y = Y;
@@ -253,10 +236,10 @@ var Switch = function(X, Y, defaultState) {
     this.color_ = switchBtnColor;
     this.sliderColor = switchBtnColor;
     this.done = false;
-    
+
     this.initialCall = true; // only true on the first call
     this.defaultState = defaultState; // active or not by default
-    
+
     var sliderColor = switchBtnColor;
     Switch.prototype.draw = function() {
         if (this.initialCall) {
@@ -267,7 +250,7 @@ var Switch = function(X, Y, defaultState) {
            }
            this.initialCall = false; // never call this code again
         }
-        fill((5, 5, 5));
+        fill(255);
         stroke(switchBtnColor);
         strokeWeight(5);
         if (mouseX > this.x - 2 && mouseX < this.x + 42 && mouseY > this.y - 2 && mouseY < this.y + 21) {
@@ -281,8 +264,8 @@ var Switch = function(X, Y, defaultState) {
         }
         if (this.active && this.done) {
             this.active = true;
-            this.color_ = color(5, 5, 5);
-            this.sliderColor = color(5, 5, 5);
+            this.color_ = color(255);
+            this.sliderColor = color(255);
             this.slider += 2;
             if(this.slider > 20){
                 this.slider = 20;
@@ -298,7 +281,7 @@ var Switch = function(X, Y, defaultState) {
             }
         } //off
         rect(this.x, this.y, 40, 19, 10);
-    
+
         pushMatrix();
         translate(this.x + 10, this.y + 10);
         noStroke();
@@ -309,60 +292,25 @@ var Switch = function(X, Y, defaultState) {
     };
 };// switch button class used in options modal
 
-var soundSwitch = new Switch(30, 100, true); // creating switches used in options modal
-var powerUpsSwitch = new Switch(30, 140, true); 
-var hardcoreModeSwitch = new Switch(30, 180, false); 
+var soundSwitch = new Switch(60, 110, true); // creating switches used in options modal
+var powerUpsSwitch = new Switch(60, 150, true);
+var hardcoreModeSwitch = new Switch(60, 190, false);
 
-var playButton = new Button(95, 230, 100, 30, "Play!"); // creating all the buttons used throughout the game
-var optionsButton = new Button(205, 230, 100, 30, "Options");
+var playButton = new Button(100, 230, 200, 50, "PLAY"); // creating all the buttons used throughout the game
+var optionsButton = new Button(100, 300, 200, 40, "OPTIONS");
 var resumeButton = new Button(150, 230, 100, 30, "Resume");
 var mainMenuButton = new Button(150, 375, 100, 30, "Menu");
-var exitOptionsModal = new Button(280, 25, 100, 30, "Close");
+var exitOptionsModal = new Button(247, 50, 100, 30, "Close");
 
-var transition = function(nextScene) {
-    fill(0, 0, 0, transitionOpacity);
-    rect(0, 0, width, height);
-    // println("Switch Scene " + nextScene + " | current scene " + scene);
-    switch (transitionStage) {
-        case 1:
-            transitionOpacity += 3;
-            if (transitionOpacity >= 40) {
-                transitionStage = 2;
-            }
-            break;
-        case 2:
-            transitionOpacity *= transitionSpeed;
-            if (transitionOpacity >= 255) {
-                transitionStage = 3;
-                scene = nextScene;
-                transitionOpacity = 255;
-            }
-            break;
-        case 3:
-            transitionOpacity /= transitionSpeed - 0.22;
+var drawMenuButtons = false;
+var options = false;
 
-            if (transitionOpacity <= 7) {
-                transitionStage = 4;
-            }
-            break;
-        case 4:
-            transitionOpacity--;
-            if (transitionOpacity <= 0) {
-                transitionOpacity = 0;
-            }
-            break;
-        default:
-            println("unable to transition to scene: " + nextScene);
-            break;
-    }
-    // TODO: fine tune transitions
-}; // smoothly transition from scene to scene with fade
-var menuButtons = function() {
+function menuButtons () {
     playButton.draw();
     optionsButton.draw();
     if (playButton.pressed && !options) {
         scrollSpeed = 1;
-         character = {
+         Player = {
             x: 200,
             y: 200,
             w: 16,
@@ -373,8 +321,7 @@ var menuButtons = function() {
             speed: 1.04,
             gravity: 4
         };
-        transitionStage = 1;
-        playGame = true;
+        scene = "game";
         beginGameTime = upTime / 100000000; // this is the aproximate time the game began from program start
     }
     if (optionsButton.pressed) {
@@ -382,120 +329,92 @@ var menuButtons = function() {
         exitOptionsModal.pressed = false;
     }
 
-}; // draws and adds functionality to most of the buttons used in the main menu
-var menu = function() {
-    back_ground();
-    textYPos *= 1.1;
-    text3D("Drop\nBall", 90, 200, 201.1 - textYPos);
-    if (textYPos > 80) {
-        textYPos = 80;
-        drawMenuButtons = true;
-    }
-    if (drawMenuButtons) {
-        menuButtons();
-        textAlign(CENTER, CENTER);
-        text("Don't get squished on the ceiling,\navoid getting blown up by rockets.", 200, 300);
-        textAlign(CORNER);
-    }
+} // draws and adds functionality to most of the buttons used in the main menu
+
+var optionsOpacity = 1.1;
+function optionsModal () {
+    optionsOpacity = constrain(optionsOpacity, 2 , 255);
+
+    pushMatrix();
+    scale(optionsOpacity/255);
+    noStroke();
+    fill(255, 255, 255, optionsOpacity);
+    rect(40, 40, 320, 520, 10);
+
+    fill(107, 87, 255);
+    rect(40, 40, 320, 50, 10);
+    rect(40, 50, 320, 40);
+
+    popMatrix();
+
     if (options) {
-        if (optionsOpacity >= 255) {
-            optionsOpacity = 255;
-        }
         pushMatrix();
         // fade menu in and scale up
         scale(optionsOpacity/255);
-        fill(5, 5, 5, optionsOpacity);
-        rect(10, 10, 380, 580, 10);
-        fill(128, 0, 0, optionsOpacity);
-        rect(10, 10, 380, 60, 10);
-        rect(10, 30, 380, 40);
+
         optionsOpacity *= 1.2;
-        fill(235, 235, 235);
-        
-        text("Options", 32, 45);
-        
+        fill(255, 255, 255);
+
+        text("Options", 60, 70);
+
         soundSwitch.draw();
-        fill(179, 0, 3);
-        text("Sound", 80, 117);
-        
+        fill(91, 72, 240);
+        text("Sound", 110, 126);
+
         powerUpsSwitch.draw();
-        fill(179, 0, 3);
-        text("Power Ups", 80, 158);
-        
+        fill(91, 72, 240);
+        text("Power Ups", 110, 167);
+
         hardcoreModeSwitch.draw();
-        fill(179, 0, 3);
-        text("Hardcore Mode", 80, 197);
-        
+        fill(91, 72, 240);
+        text("Hardcore Mode", 110, 207);
+
         exitOptionsModal.draw();
         popMatrix();
-        
+
         if (exitOptionsModal.pressed) {
             options = false;
         }
     } else {
         // fade and scale out modal animation
-        pushMatrix();
-        scale(optionsOpacity/255);
-        fill(5, 5, 5, optionsOpacity);
-        rect(10, 10, 380, 580, 10);
-        fill(128, 0, 0, optionsOpacity);
-        rect(10, 10, 380, 60, 10);
-        rect(10, 30, 380, 40);
         optionsOpacity /= 1.2;
-        if (optionsOpacity <= 2) {
-            optionsOpacity = 2;
-        }
-        popMatrix();
-        
     }
-}; // 3D "Drop Ball" text and options modal | main menu
-var pause = function() {
-    back_ground();
-    fill(255, 0, 0, 40);
-    noStroke();
-    rect(0, 200, width, 200);
+}
+
+function menu () {
+    backgroundScroll();
+    text3D("DROP\nBALL", 90, 200, 200);
+
+    menuButtons();
     textAlign(CENTER, CENTER);
-    fill(255, 222, 222);
-    textSize(30);
-    text("Game Paused", 200, 275);
-    textSize(23);
-    text("Mouse over to resume", 200, 310);
-}; // pause screen TODO implement pause on mouseOut
+    text3D("Don't get squished on the ceiling,\navoid getting blown up by rockets.", 18, 200, height - 50);
+    textAlign(CORNER);
+
+    optionsModal();
+} // 3D "Drop Ball" text and options modal | main menu
 
 /* Player */
-var ball = function() {
+
+function player () {
+    pushMatrix();
+    translate(Player.x, Player.y);
+    rotate(Player.rotation);
     fill(0, 0, 0);
-    ellipse(0, 0, character.w, character.h); //background
+    ellipse(0, 0, Player.w, Player.h); //background
     fill(150, 150, 150);
     for (var i = 0; i < 360; i += 60) {
-        arc(0, 0, character.w, character.h, i, i + 30); //spindles
+        arc(0, 0, Player.w, Player.h, i, i + 30); //spindles
     }
-    ellipse(0, 0, character.w / 3, character.h / 3); //tire
+    ellipse(0, 0, Player.w / 3, Player.h / 3); //tire
     stroke(150, 150, 150);
     noFill();
     strokeWeight(3);
     stroke(92, 92, 92);
-    ellipse(0, 0, character.w, character.h);
-};// the character skin
-var player = function() {
-    // particles.push(new Particle(new PVector(character.x, character.y)));
-    // for (var i = particles.length - 1; i >= 0; i--) {
-    //     var p = particles[i];
-    //     p.run();
-    //     if (p.isDead()) {
-    //         particles.splice(i, 1);
-    //     }
-    // }
-
-    pushMatrix();
-    translate(character.x, character.y);
-    rotate(character.rotation);
-    ball();
+    ellipse(0, 0, Player.w, Player.h);
     popMatrix();
+}
 
-}; //the player
-
-var wallCollision = function(wallData, X) {
+function wallCollision (wallData, X) {
     var collided = false;
     for (var index = 0; index < wallData.numberOfLines; index++) {
         if ((X > wallData.startx[index] - 9) && (X < wallData.endx[index] + 9)) {
@@ -503,90 +422,94 @@ var wallCollision = function(wallData, X) {
         }
     }
     return (collided);
-}; // used (inside of game();) to determine whether or not the player is colliding with the walls 
+} // used (inside of game();) to determine whether or not the player is colliding with the walls
+
+/* Input */
+
 var lastKey = null;
 var canControl = true;
-var keys = []; //character rotation
-var keyPressed = function() {
+var keys = []; //Player rotation
+function mousePressed () {
+    mp = true;
+}
+function keyPressed () {
     keys[keyCode] = true;
-};
-var keyReleased = function() {
+}
+function keyReleased () {
     keys[keyCode] = false;
-};
-var keyController = function() {
+}
+function keyController () {
     if (keyIsPressed) {
         canControl = true;
     } else {
         // decelerate
         canControl = false;
         if (lastKey === "left") {
-            character.x -= character.speed;
-            character.rotation -= character.speed * 5;
+            Player.x -= Player.speed;
+            Player.rotation -= Player.speed * 5;
         }
         if (lastKey === "right") {
-            character.x += character.speed;
-            character.rotation += character.speed * 5;
+            Player.x += Player.speed;
+            Player.rotation += Player.speed * 5;
         }
     }
 
     if (canControl) {
         // add speed if either of the movement keys are pressed
         if (keys[RIGHT] || keys[LEFT]) {
-            character.speed += 1.08;
-            if (character.speed > 5) {
+            Player.speed += 1.08;
+            if (Player.speed > 5) {
                 // max speed of 5
-                character.speed = 5;
+                Player.speed = 5;
             }
         }
         // normal movement
         if (keys[LEFT]) {
-            character.x -= character.speed;
-            character.rotation -= character.speed * 5;
+            Player.x -= Player.speed;
+            Player.rotation -= Player.speed * 5;
             lastKey = "left";
         } else if (keys[RIGHT]) {
-            character.x += character.speed;
-            character.rotation += character.speed * 5;
+            Player.x += Player.speed;
+            Player.rotation += Player.speed * 5;
             lastKey = "right";
         }
     } else {
         // if the movement keys are released, slow down the movement, but don't instantly stop it
-        character.speed /= 1.06;
+        Player.speed /= 1.06;
     }
 
     // wall collisions
-    if (character.x - character.w / 2 <= 0) {
-        character.x += character.speed;
+    if (Player.x - Player.w / 2 <= 0) {
+        Player.x += Player.speed;
     }
-    if (character.x + character.w / 2 >= width) {
-        character.x -= character.speed;
+    if (Player.x + Player.w / 2 >= width) {
+        Player.x -= Player.speed;
     }
 
     // top collision
-    if (character.y <= 5) {
-        character.y += 15;
-        character.health -= 360 / 2;
+    if (Player.y <= 5) {
+        Player.health -= 360;
         screenshake.count = 4;
         if (playSounds) {
             playSound(getSound("rpg/hit-splat"));
         }
-        
     }
-};
+}
 
 /* Particle System */
 
 angleMode = "radians";
 
 var Particle = function(position) {
-    
+
     this.acceleration = new PVector(0, 0);
     this.velocity = new PVector(random(-1, 1), random(1, 2));
     this.position = position.get();
     this.timeToLive = 100;
     this.mass = random(10, 23);
-    
-    
-    
+
+
+
 };
 Particle.prototype.run = function() {
     this.update();
@@ -645,8 +568,8 @@ angleMode = "degrees";
 
 var rockets = [];
 var xPlosionSize = 20;//the size of the death explosion
-var xPos = character.x;//where the explosion happens
-var yPos = character.y;//^
+var xPos = Player.x;//where the explosion happens
+var yPos = Player.y;//^
 var xPlosionColor = 255;//color of explosion
 var xPlosionTransparency = 255;//transpoerancy of the explosion
 var Rocket = function (x, y) {
@@ -655,26 +578,26 @@ var Rocket = function (x, y) {
     this.exploded = false;
     this.endX = 0;
     this.endY = 0; // last known coordinates of rocket (used to draw explosion)
-    
+
     this.initializedRocketTrail = false;
     this.rocketTrailIndex = 0;
-    
+
     Rocket.prototype.draw = function () {
-        
+
         if (!this.initializedRocketTrail) {
             this.rocketTrailIndex = rocketTrails.length;
-            
+
             rocketTrails[this.rocketTrailIndex] = new ParticleSystem(new PVector(this.x, this.y));
             this.initializedRocketTrail = true;
         }
         this.y -= scrollSpeed * 2;
-        
+
         // rocketTrails[this.rocketTrailIndex].applyForce(wind);
         rocketTrails[this.rocketTrailIndex].addParticle();
         rocketTrails[this.rocketTrailIndex].run();
-        
+
         rocketTrails[this.rocketTrailIndex].origin.y = this.y + 40;
-        
+
         noStroke();
         fill(222, 130, 0, 150);
         triangle(this.x + random(0,4), this.y + 60 + random(0,4), this.x + 4 + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
@@ -682,13 +605,13 @@ var Rocket = function (x, y) {
         triangle(this.x - 3 + random(0,4), this.y + 55 + random(0,4), this.x + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
         fill(222, 107, 0, 150);
         triangle(this.x + random(0,4), this.y + 60 + random(0,4), this.x + 4 + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
-        
+
         noFill();
         stroke(255, 0, 0);
         pushMatrix();
         translate(-60 + this.x, -49 + this.y);
         scale(0.3);
-        
+
         noStroke();
         fill(255, 0, 0);
         triangle(200, 290, 240, 290, 200, 160);
@@ -709,13 +632,13 @@ var Rocket = function (x, y) {
         fill(255, 0, 0);
         rect(200, 240, 5, 50);
         popMatrix();
-        
-        if (character.x + character.w > this.x && character.x - character.w/2 < this.x + 20 && character.y > this.y && character.y < this.y + 30) {
+
+        if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 20 && Player.y > this.y && Player.y < this.y + 30) {
             if (playSounds) {
                 playSound(getSound("retro/boom2"));
             }
-            if (!character.shield) {
-                character.health -= 360 / 2;
+            if (!Player.shield) {
+                Player.health -= 360 / 2;
             }
             this.exploded = true;
             xPlosionSize = 20;//the size of the death explosion
@@ -725,7 +648,7 @@ var Rocket = function (x, y) {
             this.endY = this.y;
             screenshake.count = 7;
         }
-        
+
         if (this.y >= height + 50) {
             fill(255, 0, 0, 100);
             ellipse(this.x, height - 40, 30, 30);
@@ -734,40 +657,26 @@ var Rocket = function (x, y) {
         }
     };
 };
-var explosionInfo = {
-    exploding: false,
-    x: null,
-    y: null
-};
 
 var explosion = function (x, y) {
-    noStroke();
-    fill(255, 20, 0, xPlosionTransparency);
-    ellipse(x, y, xPlosionSize, xPlosionSize);
-    fill(xPlosionColor/2, 0, 0, xPlosionTransparency * 1.5);
-    ellipse(x, y, xPlosionSize/2, xPlosionSize/2);
-    
-    //the variables change
-    xPlosionSize *= 1.2;
-    xPlosionColor -= 5;
-    xPlosionTransparency -= 8;
+    // Todo
 };
 
 /* Power-ups */
 
 var powerUps = [];
 var PowerUp = function (x, y) {
-    
+
     this.x = x;
     this.y = y;
     this.diameter = 25;
     this.alive = true;
     this.type = round(random(0, 1));
     this.speedModifier = random(0, 0.3);
-    
+
     PowerUp.prototype.draw = function () {
 
-        
+
         this.y += oscillate(120, 2);
         this.x += 0.6 + this.speedModifier;
         pushMatrix();
@@ -785,26 +694,26 @@ var PowerUp = function (x, y) {
         vertex(115,190);
         endShape(CLOSE);
         popMatrix();
-        
+
         popMatrix();
-        
-        if (character.x + character.w > this.x && character.x - character.w/2 < this.x + 25 && character.y > this.y && character.y < this.y + 30) {
+
+        if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 25 && Player.y > this.y && Player.y < this.y + 30) {
             if (playSounds) {
                 playSound(getSound("rpg/battle-spell"));
             }
             if(this.type === 1) {
-                character.health += 360/2;
-                // println(character.health);
+                Player.health += 360/2;
+                // println(Player.health);
             } else {
-                character.shield = true;
+                Player.shield = true;
             }
             this.alive = false;
         }
-        
+
         if (this.x >= width + 30) {
             this.alive = false;
         }
-        
+
         if (this.type === 1) {
             // health powerup
             pushMatrix();
@@ -824,7 +733,7 @@ var PowerUp = function (x, y) {
                 popMatrix();
             popMatrix();
         } else {
-            if (character.shield) {
+            if (Player.shield) {
                 // change the powerup to health if the shield is already activated
                 this.type = 1;
             }
@@ -835,52 +744,36 @@ var PowerUp = function (x, y) {
     };
 };
 
-/* coins */
+/* Gems */
 
-var coins = [];
-var Coin = function (x, y) {
-    
-    this.x = x;
-    this.y = y;
-    this.diameter = 16;
-    this.collected = false;
-    
-    Coin.prototype.draw = function () {
-        if (!this.collected) {
-            fill(204, 173, 16);
-            ellipse(this.x, this.y, this.diameter, this.diameter);
-            this.y -= scrollSpeed;
-        }
-    };
-};
 
 /* HUD */
 
 var round10 = function(n) {
     return (n + 5) / 10 * 10;
-};// rounds input to the nearest integer 10 and returns that 
+};// rounds input to the nearest integer 10 and returns that
 var healthscore = 360;
 var subtractionSpeed = 15;
 var healthIcon = function() {
 
-    if (character.health < healthscore) {
+    if (Player.health < healthscore) {
         healthscore -= subtractionSpeed;
         if (healthscore <= 0) {
             healthscore = 0;
             subtractionSpeed = 1;
         }
-    } if (character.health > healthscore) {
+    } if (Player.health > healthscore) {
         fill(255);
         textSize(40);
         healthscore += subtractionSpeed;
         if (healthscore >= 360) {
             healthscore = 360;
-            character.health = 360;
+            Player.health = 360;
             subtractionSpeed = 1;
         }
         textSize(20);
-    } if (healthscore === character.health) {
-        healthscore = character.health;
+    } if (healthscore === Player.health) {
+        healthscore = Player.health;
     }
 
     strokeWeight(6);
@@ -911,7 +804,7 @@ var hud = function() {
     healthIcon();
     fill(255);
 
-    if (character.shield) {
+    if (Player.shield) {
         shieldOpacity *= 1.1;
         if (shieldOpacity >= 255) {
             shieldOpacity = 255;
@@ -929,7 +822,7 @@ var hud = function() {
         endShape(CLOSE);
         popMatrix();
         fill(255, 255, 255, shieldOpacity);
-        text(round(character.shieldTime), 50, 100);
+        text(round(Player.shieldTime), 50, 100);
     } else {
         shieldOpacity /= 1.1;
         if (shieldOpacity <= 1.1) {
@@ -959,41 +852,53 @@ var gameOverOpacity = {
 };
 
 /* Game */
+function shieldEffect () {
+    if (Player.shield) {
 
-var game = function() {
-    
-    if (character.isAlive) {
-        subtractionSpeed = 15;
-        
-        score += 0.0006;
-    
-        if (scrollSpeed > 2.5) {
-            // scrollSpeed += 0.0001;
-        } else {
-            scrollSpeed += 0.0006;
+        noStroke();
+        fill(255, 35, 35, shieldOpacity - 200);
+        ellipse(Player.x, Player.y, 50, 50);
+
+        Player.shieldTime -= 0.01;
+        if (Player.shieldTime <= 0) {
+            Player.shield = false;
+            Player.shieldTime = 8;
         }
-        
+    }
+}
+
+var collided;
+function game () {
+
+    if (Player.isAlive) {
+        // Speed that the floor moves up
+        subtractionSpeed = 15;
+
+        score += 0.0006;
+
+        // Increase scrollspeed until it reaches a cap
+        scrollSpeed += 0.0006;
+        scrollSpeed = constrain(scrollSpeed, 0, 2.5);
+
         gameOverOpacity = {
+            // Todo: move this to reset function, no need to keep resetting
             one: 0,
             two: 255,
             three: 255
         };
-        var gameTime = upTime / 100000000 - beginGameTime; // - pauseTime
-        score = round(gameTime / 5);
 
-        if (character.health <= 0) {
-            character.isAlive = false;
-        }// ends the game when player dies
+        score = round(upTime / 5); // - pause time
 
-        var collided = false;
+        Player.isAlive = Player.health > 0;// ends the game when player dies
+
+        collided = false;
         background(77, 67, 140);
-        
+
         for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
             drawWall(walls[wallindex]);
-            // spikes[wallindex].draw();
-            if ((walls[wallindex].Y > character.y + character.h / 2 - 3 - character.gravity * 2) && (walls[wallindex].Y < character.y + character.h / 2 + 3)) {
-                if (wallCollision(walls[wallindex], character.x)) {
-                    character.y -= scrollSpeed; //move the player up
+            if ((walls[wallindex].Y > Player.y + (Player.h / 2) - Player.gravity * 2) && (walls[wallindex].Y < Player.y + Player.h / 2 + 3)) {
+                if (wallCollision(walls[wallindex], Player.x)) {
+                    Player.y -= scrollSpeed; //move the player up
                     collided = true;
                 }
             }
@@ -1002,32 +907,30 @@ var game = function() {
             // Get rid of wall 0.  Move wall 1 through numberWalls up one.
             for (var index = 0; index < numberWalls - 1; index++) {
                 walls[index] = walls[index + 1];
-
             }
             // Add new wall at end of array of walls (to replace wall[0] that removed)
             walls[numberWalls - 1] = createWall(walls[numberWalls - 2].Y + distBtwnWalls);
         }
+
+        canControl = collided;
         if (collided === false) {
-            canControl = false;
-            if (character.y < height) {
-                character.y += character.gravity;
+            if (Player.y < height) {
+                Player.y += Player.gravity;
             }
-        } else {
-            canControl = true;
         }
         noStroke();
         player();
         keyController();
-        
+
         for (var i = 0; i < rockets.length; i++) {
             rockets[i].draw();
             if (rockets[i].y <= -400 || rockets[i].exploded) {
                 if (rockets[i].exploded) {
-                    explosionInfo = {
-                        exploding: true,
-                        x: rockets[i].endX,
-                        y: rockets[i].endY
-                    };
+                    // explosionInfo = {
+                    //     exploding: true,
+                    //     x: rockets[i].endX,
+                    //     y: rockets[i].endY
+                    // };
                 }
                 rockets.splice(i, 1);
             }
@@ -1038,26 +941,15 @@ var game = function() {
                 powerUps.splice(i, 1);
             }
         }
-        
-        if (character.shield) {
-            
-            noStroke();
-            fill(255, 35, 35, shieldOpacity - 200);
-            ellipse(character.x, character.y, 50, 50);
-            
-            character.shieldTime -= 0.01;
-            if (character.shieldTime <= 0) {
-                character.shield = false;
-                character.shieldTime = 8;
-            }
-        }
+
+        shieldEffect();
 
         hud();
-        
+
     }
     else {
-        back_ground();
-        gameOverOpacity.one += 2;
+        backgroundScroll();
+        gameOverOpacity.one += 4;
         fill(0, 0, 0, gameOverOpacity.one);
         rect(0, 0, width, height);
         fill(255, 255, 255);
@@ -1067,55 +959,45 @@ var game = function() {
             textSize(22);
             text("You Scored " + score + (score > 1 || score === 0? " Points." : " Point."), 200, 351);
             noStroke();
-            gameOverOpacity.two --;
+            gameOverOpacity.two -= 2;
             fill(0, 0, 0, gameOverOpacity.two);
             rect(0, 338, width, 30);
-            
+
             if (gameOverOpacity.one > 500) {
                 mainMenuButton.draw();
                 textAlign(CENTER, CENTER);
-                gameOverOpacity.three --;
+                gameOverOpacity.three -= 2;
                 fill(0, 0, 0, gameOverOpacity.three);
                 rect(0, 371, width, 322);
             }
         }
-        
+
         if (mainMenuButton.pressed) {
-            gotoMenu = true;
-            playGame = false;
-            transitionStage = 1;
+            scene = "menu";
         }
     }
-};
+}
 
-for (var yloc = 100; yloc < height + distBtwnWalls; yloc += distBtwnWalls) {
+for (var yloc = 100; yloc < height + distBtwnWalls*2; yloc += distBtwnWalls) {
     walls[numberWalls++] = createWall(yloc);
 } // declaring the distance between different walls
 
 /* Draw */
 
-draw = function() {
+function draw () {
     screenshaker();
     pushMatrix();
     translate(screenshake.x, screenshake.y);
-    var rocketLaunch = round(random(0, 1000));
-    var spawnPowerUp = round(random(0, 1000));
-    var spawnCoin = round(random(0, 1000));
-    if (rocketLaunch <= 3 && rockets.length <= 4) {
-        rockets.push(new Rocket(random(0, width), height + 200));
+    var rocketLaunchProbability = round(random(0, 1000));
+    var spawnPowerUpProbability = round(random(0, 1000));
+    var spawnCoinProbability = round(random(0, 1000));
+    if (rocketLaunchProbability <= 4 && rockets.length <= 4) {
+        rockets.push(new Rocket(random(0, width), height + 200 + random(0, 200)));
     }
-    if (spawnPowerUp <= 5 && powerUps.length <= 0) {
-        powerUps.push(new PowerUp(-50, random(200, height - 50)));
+    if (spawnPowerUpProbability <= 5 && powerUps.length <= 0) {
+        powerUps.push(new PowerUp(-50, random(200, height - 100)));
     }
-    if (spawnCoin <= 5 && coins.length <= 0) {
-        coins.push(new Coin(random(0, width), height + 10));
-    }
-    // println(coins.length);
-    
-    for (var i = 0; i < coins.length; i ++) {
-        coins[i].draw();
-    }
-    
+
     switch (scene) {
         case "logo":
             logo();
@@ -1127,7 +1009,6 @@ draw = function() {
             game();
             break;
         case "pause":
-            pause();
             break;
         default:
             background(77, 67, 140);
@@ -1136,108 +1017,9 @@ draw = function() {
             text("Unable to find scene \"" + (scene === ""? "____" : scene) + "\",\nPlease restart the program", width/2, height/2);
             break;
     }
-    
-    // Apply wind force to all Particles
 
-    if (playGame) {
-        transition("game");
-    } if (gotoMenu) {
-        transition("menu");
-        opacity = 255;
-    } if (pauseGame) {
-        transition("pause");
-    }
-    
-    if (explosionInfo.exploding) {
-        explosion(explosionInfo.x, explosionInfo.y);
-    }
     canControl = false;
-    upTime += millis();
+    upTime += 0.05;
     mp = false;
     popMatrix();
-};
-
-mousePressed = function() {
-    mp = true;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
