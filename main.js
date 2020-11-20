@@ -19,9 +19,65 @@ TODO:
 
 /* Setup */
 smooth(); // for Firefox users
-textFont(createFont("tahoma bold"), 20);// sadly not availabe on all operating systems
+textFont(createFont("Tahoma Bold"), 20);// sadly not availabe on all operating systems
 textAlign(CENTER, CENTER);
 frameRate(60);
+
+var bg = function(){
+        pushMatrix();
+    translate(0, 80);
+    background(1, 30, 97);
+    fill(255, 255, 255);
+    ellipse(200 + 10, 200, 100, 100);
+    fill(1, 30, 97);
+    ellipse(211 + 13, 200, 100, 100);
+    fill(255, 255, 255, 200);
+    ellipse(285, 200, 5, 5);
+    ellipse(254, 99, 5, 5);
+    ellipse(153, 123, 5, 5);
+    ellipse(92, 220, 5, 5);
+    ellipse(132, 303, 3, 3);
+    ellipse(271, 298, 3, 3);
+    pushMatrix();
+    translate(1, 0);
+    ellipse(80, 80, 5, 5);
+    ellipse(82, 78, 5, 5);
+    ellipse(85, 75, 4, 4);
+    ellipse(88, 72, 3, 3);
+    ellipse(91, 69, 1, 1);
+    popMatrix();
+    pushMatrix();
+    translate(138, 271);
+    ellipse(80, 80, 5, 5);
+    ellipse(82, 78, 5, 5);
+    ellipse(85, 75, 4, 4);
+    ellipse(88, 72, 3, 3);
+    ellipse(91, 69, 1, 1);
+    popMatrix();
+    pushMatrix();
+    translate(-5, 305);
+    ellipse(80, 80, 5, 5);
+    ellipse(82, 78, 5, 5);
+    ellipse(85, 75, 4, 4);
+    ellipse(88, 72, 3, 3);
+    ellipse(91, 69, 1, 1);
+    popMatrix();
+    popMatrix();
+    
+    for(var i = 0; i < 50; i ++)
+    {
+        fill(255, 255, 255, 1.5);
+        ellipse(200, 200, i * 15, i * 15);
+    }
+    
+    fill(255, 255, 255, 10);
+    rect(0, 593, 400, 10);
+    rect(0, 584, 400, 16);
+    rect(0, 575, 400, 26);
+    
+    fill(0, 0, 0, 10);
+    rect(0, 0, 400, 600);
+};
 
 var mp = false; // mouse pressed
 var scene = "logo";// logo, menu, game, pause
@@ -37,7 +93,7 @@ var beginGameTime = 0;// the millis() that the game began
 var Player = {
     x: 200,
     y: 200,
-    w: 16,
+    w: 20,
     h: this.w,
     health: 360,// 360 = max health
     rotation: 0,
@@ -126,9 +182,11 @@ function drawWall (wallData) {
 
     stroke(255, 255, 255);
     noStroke();
-    fill(255, 255, 255);
     for (var index = 0; index < wallData.numberOfLines; index++) {
-        rect(wallData.startx[index], wallData.Y, wallData.endx[index] - wallData.startx[index], 3, 5);
+        fill(0, 0, 0, 100);
+        rect(wallData.startx[index], wallData.Y + 5, wallData.endx[index] - wallData.startx[index], 4, 5);
+        fill(255, 255, 255);
+        rect(wallData.startx[index], wallData.Y, wallData.endx[index] - wallData.startx[index], 5, 5);
     }
 
     wallData.Y -= scrollSpeed;
@@ -146,7 +204,7 @@ function transition (nextScene) {
 
 var backgroundScroll = function() {
     var collided = false;
-    background(77, 67, 140);
+    
     for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
         drawWall(walls[wallindex]);
     } // drawing all of the walls
@@ -182,7 +240,7 @@ var logo = function() {
     text("Disco Nugget Development\nAnd\nIsaac Emerald\nPresent...", 200, height/2);
 
 };// initial splashscreen/logo
-var Button = function(X, Y, Width, Height, Text) {
+var Button = function(X, Y, Width, Height, Text, s) {
 
     this.offsetY = 0;
     this.x = X;
@@ -192,14 +250,15 @@ var Button = function(X, Y, Width, Height, Text) {
     this.bText = Text;
     this.pressed = false;
     this.hoverDim = 0;
+    this.s = s;
 
     Button.prototype.draw = function() {
 
         noStroke();
         textSize(20);
-        fill(46, 43, 64);
+        fill(0, 0, 0, 100);
         rect(this.x, this.y + 3, this.width, this.height, 5);
-        fill(152, 137, 250);
+        fill(87, 124, 235);
         if (mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height) {
             // fill(255, 50, 50);
             this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
@@ -217,9 +276,11 @@ var Button = function(X, Y, Width, Height, Text) {
         rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
         fill(0, 0, 0, this.hoverDim);
         rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
-
-        fill(255, 255, 255);
+        
+        
+        textSize(this.s);
         textAlign(CENTER, CENTER);
+        fill(255, 255, 255);
         text(this.bText, this.x + this.width / 2, this.y + this.height / 2 - 1 + this.offsetY);
         textAlign(TOP, LEFT);
     };
@@ -296,11 +357,11 @@ var soundSwitch = new Switch(60, 110, true); // creating switches used in option
 var powerUpsSwitch = new Switch(60, 150, true);
 var hardcoreModeSwitch = new Switch(60, 190, false);
 
-var playButton = new Button(100, 230, 200, 50, "PLAY"); // creating all the buttons used throughout the game
-var optionsButton = new Button(100, 300, 200, 40, "OPTIONS");
+var playButton = new Button(100, 350, 200, 100, "PLAY", 50); // creating all the buttons used throughout the game
+var optionsButton = new Button(100, 460, 200, 40, "OPTIONS", 20);
 var resumeButton = new Button(150, 230, 100, 30, "Resume");
 var mainMenuButton = new Button(150, 375, 100, 30, "Menu");
-var exitOptionsModal = new Button(247, 50, 100, 30, "Close");
+var exitOptionsModal = new Button(247, 50, 100, 30, "CLOSE", 20);
 
 var drawMenuButtons = false;
 var options = false;
@@ -313,8 +374,8 @@ function menuButtons () {
          Player = {
             x: 200,
             y: 200,
-            w: 16,
-            h: 16,
+            w: 30,
+            h: 30,
             health: 360,
             rotation: 0,
             isAlive: true,
@@ -383,7 +444,19 @@ function optionsModal () {
 
 function menu () {
     backgroundScroll();
-    text3D("DROP\nBALL", 90, 200, 200);
+    
+    textAlign(CENTER, CENTER);
+    textSize(70);
+    fill(0, 0, 0, 70);
+    text("DROP", 205, 134 - 30);
+    fill(255, 255, 255);
+    text("DROP", 200, 134 - 30);
+    ellipse(229, 136 - 30, 54, 54);
+    textSize(81.5);
+    fill(0, 0, 0, 70);
+    text("BALL", 205, 202 - 30);
+    fill(255, 255, 255);
+    text("BALL", 200, 202 - 30);
 
     menuButtons();
     textAlign(CENTER, CENTER);
@@ -399,17 +472,16 @@ function player () {
     pushMatrix();
     translate(Player.x, Player.y);
     rotate(Player.rotation);
-    fill(0, 0, 0);
+    fill(204, 204, 204);
     ellipse(0, 0, Player.w, Player.h); //background
-    fill(150, 150, 150);
+    fill(255, 255, 255);
     for (var i = 0; i < 360; i += 60) {
         arc(0, 0, Player.w, Player.h, i, i + 30); //spindles
     }
     ellipse(0, 0, Player.w / 3, Player.h / 3); //tire
-    stroke(150, 150, 150);
     noFill();
     strokeWeight(3);
-    stroke(92, 92, 92);
+    stroke(255, 255, 255, 150);
     ellipse(0, 0, Player.w, Player.h);
     popMatrix();
 }
@@ -892,7 +964,9 @@ function game () {
         Player.isAlive = Player.health > 0;// ends the game when player dies
 
         collided = false;
-        background(77, 67, 140);
+        
+        
+                   noStroke();
 
         for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
             drawWall(walls[wallindex]);
@@ -987,6 +1061,7 @@ for (var yloc = 100; yloc < height + distBtwnWalls*2; yloc += distBtwnWalls) {
 function draw () {
     screenshaker();
     pushMatrix();
+    bg();
     translate(screenshake.x, screenshake.y);
     var rocketLaunchProbability = round(random(0, 1000));
     var spawnPowerUpProbability = round(random(0, 1000));
@@ -1011,7 +1086,7 @@ function draw () {
         case "pause":
             break;
         default:
-            background(77, 67, 140);
+        
             fill(255, 255, 255);
             textAlign(CENTER, CENTER);
             text("Unable to find scene \"" + (scene === ""? "____" : scene) + "\",\nPlease restart the program", width/2, height/2);
@@ -1022,4 +1097,6 @@ function draw () {
     upTime += 0.05;
     mp = false;
     popMatrix();
+    
 }
+
