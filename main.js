@@ -79,6 +79,47 @@ var bg = function(){
     rect(0, 0, 400, 600);
 };
 
+var rocket = function(x, y, w, h){
+    
+    pushMatrix();
+    translate(x, y);
+    rotate(+sin(frameCount * 10)*1.5);
+    scale(w, h);
+    translate(-145 - 5, -102);
+    noStroke();
+    fill(255, 111, 0, 150);
+    triangle(168, 163, 68 + 56, 163, 147 + random(-10, 10), 200 + random(-30, 0));
+    triangle(168, 163, 68 + 56, 163, 147 + random(-10, 10), 200 + random(-30, 10));
+    triangle(168, 163, 68 + 56, 163, 147 + random(-10, 10), 200 + random(-30, 20));
+    triangle(168, 163, 68 + 56, 163, 147 + random(-10, 10), 200 + random(-30, 30));
+    triangle(168, 163, 68 + 56, 163, 147 + random(-10, 10), 200 + random(-30, 40));
+    fill(130, 130, 130);
+    rect(118 + 5, 86, 55 - 10, 86, 10);
+    fill(171, 171, 171);
+    rect(118, 82, 55, 86, 10);
+    fill(255, 255, 255);
+    rect(118, 47, 55, 63, 154);
+    rect(118, 78, 55, 86);
+    fill(0, 0, 0, 30);
+    rect(118, 78, 39, 86);
+    rect(118, 78, 17, 86);
+    
+    fill(255, 0, 0);
+    arc(118, 164, 39, 50, -195, -90);
+    arc(173, 164, 39, 50, -90, 15);
+    arc(145.5, 79, 57, 102, -187, 7);
+    
+    fill(0, 0, 0, 70);
+    arc(118, 164, 39, 50, -195, -122);
+    arc(118, 164, 39, 50, -195, -159);
+    arc(173, 164, 39, 50, -23, 15);
+    arc(173, 164, 39, 50, -60, 15);
+    arc(145.5, 79, 57, 102, -187, -62);
+    arc(145.5, 79, 57, 102, -187, -117);
+    
+    popMatrix();
+};
+
 var mp = false; // mouse pressed
 var scene = "logo";// logo, menu, game, pause
 
@@ -313,7 +354,7 @@ var Switch = function(X, Y, defaultState) {
         }
         fill(255);
         stroke(switchBtnColor);
-        strokeWeight(5);
+        strokeWeight(2);
         if (mouseX > this.x - 2 && mouseX < this.x + 42 && mouseY > this.y - 2 && mouseY < this.y + 21) {
             if (mp && this.active === false && this.done === false) {
                 this.active = true; //turn it on
@@ -359,8 +400,8 @@ var hardcoreModeSwitch = new Switch(60, 190, false);
 
 var playButton = new Button(100, 350, 200, 100, "PLAY", 50); // creating all the buttons used throughout the game
 var optionsButton = new Button(100, 460, 200, 40, "OPTIONS", 20);
-var resumeButton = new Button(150, 230, 100, 30, "Resume");
-var mainMenuButton = new Button(150, 375, 100, 30, "Menu");
+var resumeButton = new Button(150, 230, 100, 30, "Resume", 20);
+var mainMenuButton = new Button(150, 375, 100, 30, "Menu", 20);
 var exitOptionsModal = new Button(247, 50, 100, 30, "CLOSE", 20);
 
 var drawMenuButtons = false;
@@ -560,8 +601,8 @@ var Particle = function(position) {
     this.acceleration = new PVector(0, 0);
     this.velocity = new PVector(random(-1, 1), random(1, 2));
     this.position = position.get();
-    this.timeToLive = 100;
-    this.mass = random(10, 23);
+    this.timeToLive = 50;
+    this.mass = random(5, 15);
 
 
 
@@ -652,15 +693,9 @@ var Rocket = function (x, y) {
         rocketTrails[this.rocketTrailIndex].run();
 
         rocketTrails[this.rocketTrailIndex].origin.y = this.y + 40;
-
-        noStroke();
-        fill(222, 130, 0, 150);
-        triangle(this.x + random(0,4), this.y + 60 + random(0,4), this.x + 4 + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
-        fill(222, 111, 0, 150);
-        triangle(this.x - 3 + random(0,4), this.y + 55 + random(0,4), this.x + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
-        fill(222, 107, 0, 150);
-        triangle(this.x + random(0,4), this.y + 60 + random(0,4), this.x + 4 + random(0,4), this.y + 40, this.x - 10 + random(0,4), this.y + 30);
-
+        
+        // old rocket sprite
+        /*
         noFill();
         stroke(255, 0, 0);
         pushMatrix();
@@ -687,6 +722,9 @@ var Rocket = function (x, y) {
         fill(255, 0, 0);
         rect(200, 240, 5, 50);
         popMatrix();
+        */
+        
+        rocket(this.x + 1.5, this.y + 23, 0.25, 0.3);
 
         if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 20 && Player.y > this.y && Player.y < this.y + 30) {
             if (playSounds) {
@@ -832,18 +870,32 @@ var healthIcon = function() {
     }
 
     strokeWeight(6);
-    stroke(255, 0, 0, 50);
     noFill();
-
+    
+    stroke(0, 0, 0, 50);
+    arc(50 + 2, 50 + 2, 40, 40, 0, 360);
+    stroke(107, 2, 2);
     arc(50, 50, 40, 40, 0, 360);
     stroke(255, 0, 0);
 
     arc(50, 50, 40, 40, 0, healthscore);
     textAlign(CENTER, CENTER);
-
+    
     pushMatrix();
     scale(1, 0.5);
-    translate(0, 77);
+    translate(2, 84);
+    noStroke();
+    fill(0, 0, 0, 50);
+    beginShape();
+    vertex(50, 15);
+    bezierVertex(50, -5, 75, 5, 50, 45);
+    vertex(50, 15);
+    bezierVertex(50, -5, 25, 5, 50, 45);
+    endShape();
+    
+    pushMatrix();
+    scale(1, 1.0);
+    translate(-2, -2);
     noStroke();
     fill(255, 0, 0);
     beginShape();
@@ -1096,6 +1148,5 @@ function draw () {
     upTime += 0.05;
     mp = false;
     popMatrix();
-    
 }
 
