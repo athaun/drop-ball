@@ -549,23 +549,6 @@ function keyController () {
         // if the movement keys are released, slow down the movement, but don't instantly stop it
         Player.speed /= 1.06;
     }
-
-    // wall collisions
-    if (Player.x - Player.w / 2 <= 0) {
-        Player.x += Player.speed;
-    }
-    if (Player.x + Player.w / 2 >= width) {
-        Player.x -= Player.speed;
-    }
-
-    // top collision
-    if (Player.y <= 5) {
-        Player.health -= 360;
-        screenshake.count = 4;
-        if (playSounds) {
-            playSound(getSound("rpg/hit-splat"));
-        }
-    }
 }
 
 /* Particle System */
@@ -939,6 +922,21 @@ function shieldEffect () {
     }
 }
 
+function playerSideCollisions () {
+
+    Player.x = constrain(Player.x, Player.w/2 + 3, width - Player.w/2 - 3);
+    Player.y = constrain(Player.y, -100, height - Player.w/2 - 5);
+    // top collision
+    if (Player.y <= 5) {
+        Player.alive = false;
+        Player.health -= 360;
+        screenshake.count = 4;
+        if (playSounds) {
+            playSound(getSound("rpg/hit-splat"));
+        }
+    }
+}
+
 var collided;
 function game () {
 
@@ -965,8 +963,9 @@ function game () {
 
         collided = false;
         
+        playerSideCollisions();
         
-                   noStroke();
+        noStroke();
 
         for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
             drawWall(walls[wallindex]);
