@@ -18,13 +18,21 @@ TODO:
 */
 
 /* Setup */
+
+Object.constructor.prototype.new = function () {
+    var obj = Object.create(this.prototype);
+    this.apply(obj, arguments);
+    return obj;
+};
+
 smooth(); // for Firefox users
 textFont(createFont("Tahoma Bold"), 20);// sadly not availabe on all operating systems
 textAlign(CENTER, CENTER);
 frameRate(60);
 
 var bg = function(){
-        pushMatrix();
+    noStroke();
+    pushMatrix();
     translate(0, 80);
     background(1, 30, 97);
     fill(255, 255, 255);
@@ -63,24 +71,22 @@ var bg = function(){
     ellipse(91, 69, 1, 1);
     popMatrix();
     popMatrix();
-    
-    for(var i = 0; i < 50; i ++)
-    {
+
+    for(var i = 0; i < 50; i ++) {
         fill(255, 255, 255, 1.5);
         ellipse(200, 200, i * 15, i * 15);
     }
-    
+
     fill(255, 255, 255, 10);
     rect(0, 593, 400, 10);
     rect(0, 584, 400, 16);
     rect(0, 575, 400, 26);
-    
+
     fill(0, 0, 0, 10);
     rect(0, 0, 400, 600);
 };
 
 var rocket = function(x, y, w, h){
-    
     pushMatrix();
     translate(x, y);
     rotate(+sin(frameCount * 10)*1.5);
@@ -103,12 +109,12 @@ var rocket = function(x, y, w, h){
     fill(0, 0, 0, 30);
     rect(118, 78, 39, 86);
     rect(118, 78, 17, 86);
-    
+
     fill(255, 0, 0);
     arc(118, 164, 39, 50, -195, -90);
     arc(173, 164, 39, 50, -90, 15);
     arc(145.5, 79, 57, 102, -187, 7);
-    
+
     fill(0, 0, 0, 70);
     arc(118, 164, 39, 50, -195, -122);
     arc(118, 164, 39, 50, -195, -159);
@@ -116,12 +122,13 @@ var rocket = function(x, y, w, h){
     arc(173, 164, 39, 50, -60, 15);
     arc(145.5, 79, 57, 102, -187, -62);
     arc(145.5, 79, 57, 102, -187, -117);
-    
+
     popMatrix();
 };
 
 var mp = false; // mouse pressed
 var scene = "logo";// logo, menu, game, pause
+var gotoScene = "logo";
 
 var score = 1;
 
@@ -236,16 +243,31 @@ function drawWall (wallData) {
 /* GUI */
 
 var opacity = 1.1; // 1.1
-
-function transition (nextScene) {
-
+var transitionStage = 0;
+function transition () {
+    if (scene !== gotoScene) {
+        if (transitionStage === 0) {
+            opacity = constrain(opacity *= 1.2, 0, 256);
+            if (opacity > 255) {
+                scene = gotoScene;
+                transitionStage = 1;
+            }
+        }
+    }
+    if (transitionStage === 1) {
+        opacity = constrain(opacity -= 20, 1.1, 255);
+        if (opacity < 3) {
+            opacity = 1.1;
+            transitionStage = 0;
+        }
+    }
+    fill(255, 255, 255, opacity);
+    rect(-100, -100, width + 200, height + 200);
 } // smoothly transition from scene to scene with fade
 
-
-
-var backgroundScroll = function() {
+function backgroundScroll () {
     var collided = false;
-    
+
     for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
         drawWall(walls[wallindex]);
     } // drawing all of the walls
@@ -259,8 +281,8 @@ var backgroundScroll = function() {
         walls[numberWalls - 1] = createWall(walls[numberWalls - 2].Y + distBtwnWalls);
     }
     noStroke();
-};// simulated gameplay (walls moving up) but without the Player or rockets
-var text3D = function(text_, size, xpos, ypos) {
+} // simulated gameplay (walls moving up) but without the Player or rockets
+function text3D (text_, size, xpos, ypos) {
     textAlign(CENTER, CENTER);
     textSize(size);
     fill(46, 43, 64, opacity);
@@ -272,17 +294,16 @@ var text3D = function(text_, size, xpos, ypos) {
     text(text_, xpos, ypos);
 
     //text(text_,xpos,ypos);
-};// gives text a "3D"/dropshadow look
+} // gives text a "3D"/dropshadow look
 
-var logo = function() {
+function logo () {
 
-    scene = "menu";
+    gotoScene = "menu";
 
     text("Disco Nugget Development\nAnd\nIsaac Emerald\nPresent...", 200, height/2);
 
-};// initial splashscreen/logo
-var Button = function(X, Y, Width, Height, Text, s) {
-
+} // initial splashscreen/logo
+function Button (X, Y, Width, Height, Text, s) {
     this.offsetY = 0;
     this.x = X;
     this.y = Y;
@@ -294,31 +315,26 @@ var Button = function(X, Y, Width, Height, Text, s) {
     this.s = s;
 
     Button.prototype.draw = function() {
-
         noStroke();
         textSize(20);
         fill(0, 0, 0, 100);
         rect(this.x, this.y + 3, this.width, this.height, 5);
         fill(87, 124, 235);
+
         if (mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height) {
             // fill(255, 50, 50);
             this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
-            if (mp) {
-                this.pressed = true;
-            } else {
-                this.pressed = false;
-            }
+            this.pressed = mp;
             this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
-
         } else {
             this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
             this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
         }
+
         rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
         fill(0, 0, 0, this.hoverDim);
         rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
-        
-        
+
         textSize(this.s);
         textAlign(CENTER, CENTER);
         fill(255, 255, 255);
@@ -326,166 +342,53 @@ var Button = function(X, Y, Width, Height, Text, s) {
         textAlign(TOP, LEFT);
     };
 
-};// button class used throughout game button elements
-var switchBtnColor = color(152, 137, 250);// default highlight color for all switch buttons
-var Switch = function(X, Y, defaultState) {
+} // button class used throughout game button elements
+function CircleButton (X, Y, r, t, s) {
+    this.offsetY = 0;
     this.x = X;
     this.y = Y;
-    this.bx = X;
-    this.by = Y;
-    this.active = false;
-    this.slider = 0;
-    this.color_ = switchBtnColor;
-    this.sliderColor = switchBtnColor;
-    this.done = false;
+    this.radius = r;
+    this.bText = t;
+    this.pressed = false;
+    this.hoverDim = 0;
+    this.s = s;
 
-    this.initialCall = true; // only true on the first call
-    this.defaultState = defaultState; // active or not by default
-
-    var sliderColor = switchBtnColor;
-    Switch.prototype.draw = function() {
-        if (this.initialCall) {
-           if (this.defaultState === true) {
-                this.active = true;
-                this.done = true;
-                this.slider = 20;
-           }
-           this.initialCall = false; // never call this code again
-        }
-        fill(255);
-        stroke(switchBtnColor);
-        strokeWeight(2);
-        if (mouseX > this.x - 2 && mouseX < this.x + 42 && mouseY > this.y - 2 && mouseY < this.y + 21) {
-            if (mp && this.active === false && this.done === false) {
-                this.active = true; //turn it on
-                this.done = true;
-            } else if(mp && this.done){
-                this.done = false;
-                this.active = false;//turn it off
-            }
-        }
-        if (this.active && this.done) {
-            this.active = true;
-            this.color_ = color(255);
-            this.sliderColor = color(255);
-            this.slider += 2;
-            if(this.slider > 20){
-                this.slider = 20;
-                this.done = true;
-            }
-            fill(switchBtnColor);
-        } else {
-            this.sliderColor = sliderColor;
-            this.slider -= 2;
-            if(this.slider < 0){
-                this.slider = 0;
-                this.done = false;
-            }
-        } //off
-        rect(this.x, this.y, 40, 19, 10);
-
-        pushMatrix();
-        translate(this.x + 10, this.y + 10);
+    CircleButton.prototype.draw = function() {
         noStroke();
-        fill(this.sliderColor);
-        ellipse(this.slider, 0, 10, 10);
-        popMatrix();
-        return this.active;
+        fill(0, 0, 0, 100);
+        ellipse(this.x, this.y + 3, this.radius * 2, this.radius * 2);
+        fill(87, 124, 235);
+        if (dist(mouseX, mouseY, this.x, this.y) < this.radius) {
+            this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
+            this.pressed = mp;
+            this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
+        } else {
+            this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
+            this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
+        }
+        ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
+        fill(0, 0, 0, this.hoverDim);
+        ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
+
+        textSize(this.s);
+        textAlign(CENTER, CENTER);
+        fill(255, 255, 255);
+        text(this.bText, this.x, this.y - 1 + this.offsetY);
+        textAlign(TOP, LEFT);
+        noStroke();
     };
-};// switch button class used in options modal
+}
 
-var soundSwitch = new Switch(60, 110, true); // creating switches used in options modal
-var powerUpsSwitch = new Switch(60, 150, true);
-var hardcoreModeSwitch = new Switch(60, 190, false);
-
-var playButton = new Button(100, 350, 200, 100, "PLAY", 50); // creating all the buttons used throughout the game
-var optionsButton = new Button(100, 460, 200, 40, "OPTIONS", 20);
-var resumeButton = new Button(150, 230, 100, 30, "Resume", 20);
-var mainMenuButton = new Button(150, 375, 100, 30, "Menu", 20);
-var exitOptionsModal = new Button(247, 50, 100, 30, "CLOSE", 20);
+var playButton = CircleButton.new(200, 350, 70, "PLAY", 36); // creating all the buttons used throughout the game
+var optionsButton = CircleButton.new(120, 460, 50, "OPTIONS", 16);
+var storeButton = CircleButton.new(300 - 20, 460, 50, "STORE", 16);
+var mainMenuButton = CircleButton.new(200, 450, 50, "MENU", 26);
 
 var drawMenuButtons = false;
-var options = false;
-
-function menuButtons () {
-    playButton.draw();
-    optionsButton.draw();
-    if (playButton.pressed && !options) {
-        scrollSpeed = 1;
-         Player = {
-            x: 200,
-            y: 200,
-            w: 30,
-            h: 30,
-            health: 360,
-            rotation: 0,
-            isAlive: true,
-            speed: 1.04,
-            gravity: 4
-        };
-        scene = "game";
-        beginGameTime = upTime / 100000000; // this is the aproximate time the game began from program start
-    }
-    if (optionsButton.pressed) {
-        options = true;
-        exitOptionsModal.pressed = false;
-    }
-
-} // draws and adds functionality to most of the buttons used in the main menu
-
-var optionsOpacity = 1.1;
-function optionsModal () {
-    optionsOpacity = constrain(optionsOpacity, 2 , 255);
-
-    pushMatrix();
-    scale(optionsOpacity/255);
-    noStroke();
-    fill(255, 255, 255, optionsOpacity);
-    rect(40, 40, 320, 520, 10);
-
-    fill(107, 87, 255);
-    rect(40, 40, 320, 50, 10);
-    rect(40, 50, 320, 40);
-
-    popMatrix();
-
-    if (options) {
-        pushMatrix();
-        // fade menu in and scale up
-        scale(optionsOpacity/255);
-
-        optionsOpacity *= 1.2;
-        fill(255, 255, 255);
-
-        text("Options", 60, 70);
-
-        soundSwitch.draw();
-        fill(91, 72, 240);
-        text("Sound", 110, 126);
-
-        powerUpsSwitch.draw();
-        fill(91, 72, 240);
-        text("Power Ups", 110, 167);
-
-        hardcoreModeSwitch.draw();
-        fill(91, 72, 240);
-        text("Hardcore Mode", 110, 207);
-
-        exitOptionsModal.draw();
-        popMatrix();
-
-        if (exitOptionsModal.pressed) {
-            options = false;
-        }
-    } else {
-        // fade and scale out modal animation
-        optionsOpacity /= 1.2;
-    }
-}
 
 function menu () {
     backgroundScroll();
-    
+
     textAlign(CENTER, CENTER);
     textSize(70);
     fill(0, 0, 0, 70);
@@ -499,13 +402,66 @@ function menu () {
     fill(255, 255, 255);
     text("BALL", 200, 202 - 30);
 
-    menuButtons();
-    textAlign(CENTER, CENTER);
-    text3D("Don't get squished on the ceiling,\navoid getting blown up by rockets.", 18, 200, height - 50);
-    textAlign(CORNER);
+    playButton.draw();
+    optionsButton.draw();
+    storeButton.draw();
+    if (playButton.pressed) {
+        scrollSpeed = 1;
+         Player = {
+            x: 200,
+            y: 200,
+            w: 30,
+            h: 30,
+            health: 360,
+            rotation: 0,
+            isAlive: true,
+            speed: 1.04,
+            gravity: 4
+        };
+        gotoScene = "game";
+        beginGameTime = upTime / 100000000; // this is the aproximate time the game began from program start
+    }
+    if (optionsButton.pressed) {
+        gotoScene = "options";
+    }
+    if (storeButton.pressed) {
+        gotoScene = "store";
+    }
+} // Main menu
 
-    optionsModal();
-} // 3D "Drop Ball" text and options modal | main menu
+function optionsScreen () {
+
+}
+
+/* Store */
+
+function StoreItem (y) {
+    this.y = y;
+    StoreItem.prototype.draw = function() {
+        fill(255);
+        rect(50, this.y, 300, 70, 10);
+    };
+}
+
+var items = [];
+var storeInit = true;
+function store () {
+    bg();
+    // fill(0, 0, 0, 100);
+    // rect(0, 0, width, height);
+    if (storeInit) {
+        for (var i = 0; i < 10; i ++) {
+            items.push(StoreItem.new((i * 80) + 50));
+        }
+        storeInit = false;
+    }
+
+    for (var i = 0; i < 10; i ++) {
+        items[i].draw();
+    }
+}
+
+// function
 
 /* Player */
 
@@ -598,8 +554,8 @@ angleMode = "radians";
 
 var Particle = function(position) {
 
-    this.acceleration = new PVector(0, 0);
-    this.velocity = new PVector(random(-1, 1), random(1, 2));
+    this.acceleration = PVector.new(0, 0);
+    this.velocity = PVector.new(random(-1, 1), random(1, 2));
     this.position = position.get();
     this.timeToLive = 50;
     this.mass = random(5, 15);
@@ -636,7 +592,7 @@ var ParticleSystem = function(position) {
     this.particles = [];
 };
 ParticleSystem.prototype.addParticle = function() {
-    this.particles.push(new Particle(this.origin));
+    this.particles.push(Particle.new(this.origin));
 };
 ParticleSystem.prototype.applyForce = function(f){
     for(var i = 0; i < this.particles.length; i++){
@@ -655,8 +611,8 @@ ParticleSystem.prototype.run = function(){
 
 var rocketTrails = [];
 
-var particleSystem = new ParticleSystem(new PVector(175, height/2));
-var wind = new PVector(0, 0.1);
+var particleSystem = ParticleSystem.new(PVector.new(175, height/2));
+var wind = PVector.new(0, 0.1);
 
 angleMode = "degrees";
 
@@ -683,7 +639,7 @@ var Rocket = function (x, y) {
         if (!this.initializedRocketTrail) {
             this.rocketTrailIndex = rocketTrails.length;
 
-            rocketTrails[this.rocketTrailIndex] = new ParticleSystem(new PVector(this.x, this.y));
+            rocketTrails[this.rocketTrailIndex] = ParticleSystem.new(PVector.new(this.x, this.y));
             this.initializedRocketTrail = true;
         }
         this.y -= scrollSpeed * 2;
@@ -693,7 +649,7 @@ var Rocket = function (x, y) {
         rocketTrails[this.rocketTrailIndex].run();
 
         rocketTrails[this.rocketTrailIndex].origin.y = this.y + 40;
-        
+
         // old rocket sprite
         /*
         noFill();
@@ -723,7 +679,7 @@ var Rocket = function (x, y) {
         rect(200, 240, 5, 50);
         popMatrix();
         */
-        
+
         rocket(this.x + 1.5, this.y + 23, 0.25, 0.3);
 
         if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 20 && Player.y > this.y && Player.y < this.y + 30) {
@@ -768,8 +724,6 @@ var PowerUp = function (x, y) {
     this.speedModifier = random(0, 0.3);
 
     PowerUp.prototype.draw = function () {
-
-
         this.y += oscillate(120, 2);
         this.x += 0.6 + this.speedModifier;
         pushMatrix();
@@ -871,7 +825,7 @@ var healthIcon = function() {
 
     strokeWeight(6);
     noFill();
-    
+
     stroke(0, 0, 0, 50);
     arc(50 + 2, 50 + 2, 40, 40, 0, 360);
     stroke(107, 2, 2);
@@ -880,7 +834,7 @@ var healthIcon = function() {
 
     arc(50, 50, 40, 40, 0, healthscore);
     textAlign(CENTER, CENTER);
-    
+
     pushMatrix();
     scale(1, 0.5);
     translate(2, 84);
@@ -892,7 +846,7 @@ var healthIcon = function() {
     vertex(50, 15);
     bezierVertex(50, -5, 25, 5, 50, 45);
     endShape();
-    
+
     pushMatrix();
     scale(1, 1.0);
     translate(-2, -2);
@@ -961,7 +915,6 @@ var gameOverOpacity = {
 /* Game */
 function shieldEffect () {
     if (Player.shield) {
-
         noStroke();
         fill(255, 35, 35, shieldOpacity - 200);
         ellipse(Player.x, Player.y, 50, 50);
@@ -975,7 +928,6 @@ function shieldEffect () {
 }
 
 function playerSideCollisions () {
-
     Player.x = constrain(Player.x, Player.w/2 + 3, width - Player.w/2 - 3);
     Player.y = constrain(Player.y, -100, height - Player.w/2 - 5);
     // top collision
@@ -991,7 +943,6 @@ function playerSideCollisions () {
 
 var collided;
 function game () {
-
     if (Player.isAlive) {
         // Speed that the floor moves up
         subtractionSpeed = 15;
@@ -1014,9 +965,9 @@ function game () {
         Player.isAlive = Player.health > 0;// ends the game when player dies
 
         collided = false;
-        
+
         playerSideCollisions();
-        
+
         noStroke();
 
         for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
@@ -1071,8 +1022,7 @@ function game () {
 
         hud();
 
-    }
-    else {
+    } else {
         backgroundScroll();
         gameOverOpacity.one += 4;
         fill(0, 0, 0, gameOverOpacity.one);
@@ -1098,7 +1048,7 @@ function game () {
         }
 
         if (mainMenuButton.pressed) {
-            scene = "menu";
+            gotoScene = "menu";
         }
     }
 }
@@ -1118,10 +1068,10 @@ function draw () {
     var spawnPowerUpProbability = round(random(0, 1000));
     var spawnCoinProbability = round(random(0, 1000));
     if (rocketLaunchProbability <= 4 && rockets.length <= 4) {
-        rockets.push(new Rocket(random(0, width), height + 200 + random(0, 200)));
+        rockets.push(Rocket.new(random(0, width), height + 200 + random(0, 200)));
     }
     if (spawnPowerUpProbability <= 5 && powerUps.length <= 0) {
-        powerUps.push(new PowerUp(-50, random(200, height - 100)));
+        powerUps.push(PowerUp.new(-50, random(200, height - 100)));
     }
 
     switch (scene) {
@@ -1131,13 +1081,18 @@ function draw () {
         case "menu":
             menu();
             break;
+        case "options":
+            optionsScreen();
+            break;
+        case "store":
+            store();
+            break;
         case "game":
             game();
             break;
         case "pause":
             break;
         default:
-        
             fill(255, 255, 255);
             textAlign(CENTER, CENTER);
             text("Unable to find scene \"" + (scene === ""? "____" : scene) + "\",\nPlease restart the program", width/2, height/2);
@@ -1148,5 +1103,5 @@ function draw () {
     upTime += 0.05;
     mp = false;
     popMatrix();
+    transition();
 }
-
