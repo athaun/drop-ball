@@ -2,6 +2,14 @@
 // finished - TBA
 
 
+/*
+TODO -
+
+  Make powerups act like the player - so that all the rules that apply to the player
+  (like death, hit detection, and so on) are applied to the powerups
+
+ */
+
 /* Setup */
 
 Object.constructor.prototype.new = function () {
@@ -115,13 +123,13 @@ var mp = false; // Mouse pressed
 var scene = "logo"; // Logo, menu, game, pause
 var gotoScene = "logo";
 
-var score = 1;
+var score = 0;
 
 var pauseGame = false;
 var playGame = false;
-var playSounds = true;
 var upTime = 0;
 var beginGameTime = 0; // The millis() that the game began
+var soundVolume = 1.00; // Float ranges from 1 to 0
 
 var Player = {
     x: 200,
@@ -307,7 +315,6 @@ function Button (X, Y, Width, Height, Text, s) {
         fill(87, 124, 235);
 
         if (mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height) {
-            // fill(255, 50, 50);
             this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
             this.pressed = mp;
             this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
@@ -347,6 +354,11 @@ function CircleButton (X, Y, r, t, s) {
             this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
             this.pressed = mp;
             this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
+            if (this.pressed === true) {
+                var localSound = getSound("rpg/metal-clink");
+                localSound.audio.volume = soundVolume;
+                playSound(localSound);
+            }
         } else {
             this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
             this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
@@ -415,7 +427,8 @@ function menu () {
 } // Main menu
 
 function optionsScreen () {
-
+    // Add - An option for adjusting the variable "soundVolume"
+    // Add - An option to disable particles (?)
 }
 
 /* Store */
@@ -432,8 +445,6 @@ var items = [];
 var storeInit = true;
 function store () {
     back_ground();
-    // fill(0, 0, 0, 100);
-    // rect(0, 0, width, height);
     if (storeInit) {
         for (var i = 0; i < 10; i ++) {
             items.push(StoreItem.new((i * 80) + 50));
@@ -508,7 +519,7 @@ function keyController () {
 
     if (canControl) {
         // Add speed if either of the movement keys are pressed
-        if (keys[RIGHT] || keys[LEFT]) {
+        if (keys[RIGHT] || keys[LEFT] || keys[65] || keys[68]) {
             Player.speed += 1.08;
             if (Player.speed > 5) {
                 // Max speed of 5
@@ -516,11 +527,11 @@ function keyController () {
             }
         }
         // Normal movement
-        if (keys[LEFT]) {
+        if (keys[LEFT] || keys[65]) {
             Player.x -= Player.speed;
             Player.rotation -= Player.speed * 5;
             lastKey = "left";
-        } else if (keys[RIGHT]) {
+        } else if (keys[RIGHT] || keys[68]) {
             Player.x += Player.speed;
             Player.rotation += Player.speed * 5;
             lastKey = "right";
@@ -627,48 +638,17 @@ var Rocket = function (x, y) {
         }
         this.y -= scrollSpeed * 2;
 
-        // rocketTrails[this.rocketTrailIndex].applyForce(wind);
         rocketTrails[this.rocketTrailIndex].addParticle();
         rocketTrails[this.rocketTrailIndex].run();
 
         rocketTrails[this.rocketTrailIndex].origin.y = this.y + 40;
 
-        // old rocket sprite
-        /*
-        noFill();
-        stroke(255, 0, 0);
-        pushMatrix();
-        translate(-60 + this.x, -49 + this.y);
-        scale(0.3);
-
-        noStroke();
-        fill(255, 0, 0);
-        triangle(200, 290, 240, 290, 200, 160);
-        triangle(200, 290, 160, 290, 200, 160);
-        pushMatrix();
-        translate(400, 400);
-        rotate(180);
-        beginShape();
-        curveVertex(200, 370); // top
-        curveVertex(180,100);
-        curveVertex(180,220);
-        curveVertex(218,220);
-        curveVertex(218,100);
-        endShape(CLOSE);
-        popMatrix();
-        fill(255);
-        rect(180, 200, 44.5, 104);
-        fill(255, 0, 0);
-        rect(200, 240, 5, 50);
-        popMatrix();
-        */
-
         rocket(this.x + 1.5, this.y + 23, 0.25, 0.3);
 
         if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 20 && Player.y > this.y && Player.y < this.y + 30) {
-            if (playSounds) {
-                playSound(getSound("retro/boom2"));
-            }
+                var localSound = getSound("retro/boom2");
+                localSound.audio.volume = soundVolume;
+                playSound(localSound);
             if (!Player.shield) {
                 Player.health -= 360 / 2;
             }
@@ -728,12 +708,11 @@ var PowerUp = function (x, y) {
         popMatrix();
 
         if (Player.x + Player.w > this.x && Player.x - Player.w/2 < this.x + 25 && Player.y > this.y && Player.y < this.y + 30) {
-            if (playSounds) {
-                playSound(getSound("rpg/battle-spell"));
-            }
+                var localSound = getSound("rpg/metal-chime");
+                localSound.audio.volume = soundVolume;
+                playSound(localSound);
             if(this.type === 1) {
-                Player.health += 360/2;
-                // println(Player.health);
+                Player.health += 360 / 2;
             } else {
                 Player.shield = true;
             }
@@ -877,15 +856,16 @@ var hud = function() {
         scale(0.3);
         translate(-9, 182);
         beginShape();
-        vertex(110,105);
-        vertex(240,105);
-        vertex(235,190);
-        vertex(175,239);
-        vertex(115,190);
+        vertex(110, 105);
+        vertex(240, 105);
+        vertex(235, 190);
+        vertex(175, 239);
+        vertex(115, 190);
         endShape(CLOSE);
         popMatrix();
     }
     fill(255);
+    textSize(25);
     text(score, width - 30, 30);
 };
 var gameOverOpacity = {
@@ -918,19 +898,25 @@ function playerSideCollisions () {
         Player.alive = false;
         Player.health -= 360;
         screenshake.count = 4;
-        if (playSounds) {
-            playSound(getSound("rpg/hit-splat"));
-        }
+            var localSound = getSound("rpg/hit-splat");
+            localSound.audio.volume = soundVolume;
+            playSound(localSound);
     }
 }
 
+var tickTimer = 0;
+
 var collided;
 function game () {
+    tickTimer ++;
+
     if (Player.isAlive) {
         // Speed that the floor moves up
         subtractionSpeed = 15;
 
-        score += 0.0006;
+         if ((tickTimer % 50) === 0) {
+             score += 1;
+         }
 
         // Increase scrollspeed until it reaches a cap
         scrollSpeed += 0.0006;
@@ -942,8 +928,6 @@ function game () {
             two: 255,
             three: 255
         };
-
-        score = round(upTime / 5); // - pause time
 
         Player.isAlive = Player.health > 0; // Ends the game when player dies
 
@@ -1032,6 +1016,7 @@ function game () {
 
         if (mainMenuButton.pressed) {
             gotoScene = "menu";
+            score = 0; // Resetting the score (TODO: Save score to scoreboard)
         }
     }
 }
