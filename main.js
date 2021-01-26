@@ -187,7 +187,7 @@ function createWall (Y) {
     if (oneHole === 0) {
         // Randomize the two hole centers and sizes
         var hole0Center = random(0, 200);
-        var hole0Width = random(50, 100);
+        var hole0Width = random(65, 100);
         var hole1Center = random(200, 400) + hole0Width;
         var hole1Width = random(50, 100);
         // Build lines for the two holes
@@ -204,7 +204,7 @@ function createWall (Y) {
         wall.endx[2] = width;
     } else {
         var holeCenter = random(0, 400);
-        var holeWidth = random(50, 100);
+        var holeWidth = random(65, 100);
 
         // 0<-line0->hole<-line1->400
         wall.numberOfLines = 2;
@@ -261,8 +261,8 @@ function transition () {
 function backgroundScroll () {
     var collided = false;
 
-    for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
-        drawWall(walls[wallindex]);
+    for (var i = 0; i < numberWalls; i ++) {
+        drawWall(walls[i]);
     } // Drawing all of the walls
 
     if (walls[0].Y <= -4) {
@@ -433,28 +433,102 @@ function optionsScreen () {
 
 /* Store */
 
-function StoreItem (y) {
+function StoreItem (y, title) {
     this.y = y;
+    this.title = title;
+    this.strokeAlpha = 0;
+    this.init = false;
+    this.buyButton = null;
     StoreItem.prototype.draw = function() {
+        if (!this.init) {
+            this.buyButton = Button.new(width - 120, this.y + 20, 70, 30, "$15", 14);
+            this.init = true;
+        }
+        fill(165, 183, 237, 100);
+        stroke(255, 255, 255, this.strokeAlpha);
+        strokeWeight(4);
+        
+        if (mouseX > 30 && mouseX < width - 30 && mouseY > this.y && mouseY < this.y + 70) {
+            this.strokeAlpha += 20;
+        } else {
+            this.strokeAlpha /= 1.05;
+        }
+        this.strokeAlpha = constrain(this.strokeAlpha, 5, 155);
+        
+        rect(30, this.y, 340, 70, 10);
+        noStroke();
+        
+        fill(255, 255, 255, 200);
+        ellipse(65, this.y + 35, 50, 50);
+        
         fill(255);
-        rect(50, this.y, 300, 70, 10);
+        textAlign(LEFT, CENTER);
+        text(this.title, 100, this.y + 35);
+        
+        this.buyButton.draw();
     };
 }
 
 var items = [];
 var storeInit = true;
+var arrowHoverAlpha = 55;
+var arrowAnimationX = 0;
 function store () {
     back_ground();
     if (storeInit) {
+        // Initialize the store items
         for (var i = 0; i < 10; i ++) {
-            items.push(StoreItem.new((i * 80) + 50));
+            items.push(StoreItem.new((i * 80) + 70, "Item " + i));
         }
         storeInit = false;
     }
+    
+    // Top Bar
+    fill(87, 124, 235, 100);
+    rect(0, 0, width, 52);
+    fill(87, 124, 235);
+    rect(0, 0, width, 50);
+    
+    // Place holder for coins count
+    textAlign(RIGHT, CENTER);
+    fill(245, 212, 49);
+    ellipse(width - 20, 25, 20, 20);
+    text("142", width - 40, 23);
+    
+    // Screen title
+    textAlign(CENTER, CENTER);
+    fill(255);
+    textSize(25);
+    text("Shop", 200, 23);
+    textSize(16);
 
+    // Drawing store items
     for (var i = 0; i < 10; i ++) {
         items[i].draw();
     }
+    
+    // Arrow button
+    stroke(200 + arrowHoverAlpha);
+    strokeWeight(4);
+    if (mouseX < 50 && mouseY < 50) {
+        arrowHoverAlpha -= 5;
+        arrowAnimationX += 0.5;
+        if (mp) {
+            gotoScene = "menu";
+        }
+    } else {
+        arrowHoverAlpha += 5;
+        arrowAnimationX -= 0.5;
+    }
+    arrowAnimationX = constrain(arrowAnimationX, 0, 6);
+    arrowHoverAlpha = constrain(arrowHoverAlpha, 0, 55);
+    pushMatrix();
+    translate(-arrowAnimationX, 0);
+    line(20, 25, 40, 25);
+    line(20, 25, 30, 16);
+    line(20, 25, 30, 25+9);
+    popMatrix();
+    
 }
 
 /* Player */
@@ -509,11 +583,11 @@ function keyController () {
         canControl = false;
         if (lastKey === "left") {
             Player.x -= Player.speed;
-            Player.rotation -= Player.speed * 5;
+            Player.rotation -= Player.speed * 3.14;
         }
         if (lastKey === "right") {
             Player.x += Player.speed;
-            Player.rotation += Player.speed * 5;
+            Player.rotation += Player.speed * 3.14;
         }
     }
 
@@ -529,11 +603,11 @@ function keyController () {
         // Normal movement
         if (keys[LEFT] || keys[65]) {
             Player.x -= Player.speed;
-            Player.rotation -= Player.speed * 5;
+            Player.rotation -= Player.speed * 3.14;
             lastKey = "left";
         } else if (keys[RIGHT] || keys[68]) {
             Player.x += Player.speed;
-            Player.rotation += Player.speed * 5;
+            Player.rotation += Player.speed * 3.14;
             lastKey = "right";
         }
     } else {
@@ -547,60 +621,57 @@ function keyController () {
 angleMode = "radians";
 
 var Particle = function(position) {
-
     this.acceleration = PVector.new(0, 0);
     this.velocity = PVector.new(random(-1, 1), random(1, 2));
     this.position = position.get();
     this.timeToLive = 50;
     this.mass = random(5, 15);
 
-
-
+    Particle.prototype.run = function() {
+        this.update();
+        this.display();
+    };
+    Particle.prototype.applyForce = function(force) {
+        var f = force.get();
+        f.div(this.mass);
+        this.acceleration.add(f);
+    };
+    Particle.prototype.update = function() {
+        this.velocity.add(this.acceleration);
+        this.position.add(this.velocity);
+        this.acceleration.mult(0);
+        this.timeToLive -= 2.0;
+    };
+    Particle.prototype.display = function() {
+        noStroke();
+        fill(150, 150, 150, this.timeToLive);
+        ellipse(this.position.x, this.position.y, this.mass, this.mass);
+    };
+    Particle.prototype.isDead = function(){
+        return this.timeToLive < 0;
+    };
 };
-Particle.prototype.run = function() {
-    this.update();
-    this.display();
-};
-Particle.prototype.applyForce = function(force) {
-    var f = force.get();
-    f.div(this.mass);
-    this.acceleration.add(f);
-};
-Particle.prototype.update = function() {
-    this.velocity.add(this.acceleration);
-    this.position.add(this.velocity);
-    this.acceleration.mult(0);
-    this.timeToLive -= 2.0;
-};
-Particle.prototype.display = function() {
-    noStroke();
-    fill(150, 150, 150, this.timeToLive);
-    ellipse(this.position.x, this.position.y, this.mass, this.mass);
-};
-Particle.prototype.isDead = function(){
-    return this.timeToLive < 0;
-};
-
 var ParticleSystem = function(position) {
     this.origin = position.get();
     this.particles = [];
-};
-ParticleSystem.prototype.addParticle = function() {
-    this.particles.push(Particle.new(this.origin));
-};
-ParticleSystem.prototype.applyForce = function(f){
-    for(var i = 0; i < this.particles.length; i++){
-        this.particles[i].applyForce(f);
-    }
-};
-ParticleSystem.prototype.run = function(){
-    for (var i = this.particles.length-1; i >= 0; i--) {
-        var p = this.particles[i];
-        p.run();
-        if (p.isDead()) {
-            this.particles.splice(i, 1);
+    
+    ParticleSystem.prototype.addParticle = function() {
+        this.particles.push(Particle.new(this.origin));
+    };
+    ParticleSystem.prototype.applyForce = function(f){
+        for(var i = 0; i < this.particles.length; i++){
+            this.particles[i].applyForce(f);
         }
-    }
+    };
+    ParticleSystem.prototype.run = function(){
+        for (var i = this.particles.length-1; i >= 0; i--) {
+            var p = this.particles[i];
+            p.run();
+            if (p.isDead()) {
+                this.particles.splice(i, 1);
+            }
+        }
+    };
 };
 
 var rocketTrails = [];
@@ -613,11 +684,8 @@ angleMode = "degrees";
 /* Rockets */
 
 var rockets = [];
-var xPlosionSize = 20; // The size of the death explosion
 var xPos = Player.x; // X axis of where the explosion happens
 var yPos = Player.y; // Y axis of where the explosion happens
-var xPlosionColor = 255; // Color of explosion
-var xPlosionTransparency = 255; // Transpoerancy of the explosion
 var Rocket = function (x, y) {
     this.x = x;
     this.y = y;
@@ -653,15 +721,12 @@ var Rocket = function (x, y) {
                 Player.health -= 360 / 2;
             }
             this.exploded = true;
-            xPlosionSize = 20; // The size of the death explosion
-            xPlosionColor = 255; // Color of explosion
-            xPlosionTransparency = 255; // Transpoerancy of the explosion
             this.endX = this.x;
             this.endY = this.y;
             screenshake.count = 7;
         }
 
-        if (this.y >= height + 50) {
+        if (this.y >= height + 50 && this.y < height + 300) {
             fill(255, 0, 0, 100);
             ellipse(this.x, height - 40, 30, 30);
             fill(255);
@@ -729,8 +794,8 @@ var PowerUp = function (x, y) {
             translate(this.x, this.y);
                 fill(255);
                 pushMatrix();
-                scale(1, 0.5);
-                scale(0.7);
+                // scale(1, 0.5);
+                // scale(0.7);
                 translate(-44.4, -20);
                 noStroke();
                 beginShape();
@@ -820,6 +885,7 @@ var healthIcon = function() {
     vertex(50, 15);
     bezierVertex(50, -5, 25, 5, 50, 45);
     endShape();
+    popMatrix();
     popMatrix();
 };
 var shieldOpacity = 1;
@@ -937,11 +1003,12 @@ function game () {
 
         noStroke();
 
-        for (var wallindex = 0; wallindex < numberWalls; wallindex++) {
-            drawWall(walls[wallindex]);
-            if ((walls[wallindex].Y > Player.y + (Player.h / 2) - Player.gravity * 2) && (walls[wallindex].Y < Player.y + Player.h / 2 + 3)) {
-                if (wallCollision(walls[wallindex], Player.x)) {
-                    Player.y -= scrollSpeed; // Move the player up
+        for (var i = 0; i < numberWalls; i++) {
+            var w = walls[i];
+            drawWall(w);
+            if ((w.Y > Player.y + (Player.h / 2) - Player.gravity * 2) && (w.Y < Player.y + Player.h / 2 + 3)) {
+                if (wallCollision(w, Player.x)) {
+                    Player.y = w.Y - Player.h/2; // Move the player up
                     collided = true;
                 }
             }
@@ -969,11 +1036,7 @@ function game () {
             rockets[i].draw();
             if (rockets[i].y <= -400 || rockets[i].exploded) {
                 if (rockets[i].exploded) {
-                    // explosionInfo = {
-                    //     exploding: true,
-                    //     x: rockets[i].endX,
-                    //     y: rockets[i].endY
-                    // };
+
                 }
                 rockets.splice(i, 1);
             }
@@ -1036,10 +1099,10 @@ function draw () {
     var spawnPowerUpProbability = round(random(0, 1000));
     var spawnCoinProbability = round(random(0, 1000));
     if (rocketLaunchProbability <= 4 && rockets.length <= 4) {
-        rockets.push(Rocket.new(random(0, width), height + 200 + random(0, 200)));
+        rockets.push(Rocket.new(random(0, width), random(800, 1200)));
     }
     if (spawnPowerUpProbability <= 5 && powerUps.length <= 0) {
-        powerUps.push(PowerUp.new(-50, random(200, height - 100)));
+        powerUps.push(PowerUp.new(-50, random(400, height - 100)));
     }
 
     switch (scene) {
