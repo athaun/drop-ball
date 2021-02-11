@@ -1,3 +1,10 @@
+Object.constructor.prototype.new = function () {
+    var obj = Object.create(this.prototype);
+    this.apply(obj, arguments);
+    return obj;
+};
+
+draw = function () {
 // Started - 08/29/2019 (actually 07/08/2018, but I scrapped the old code)
 // finished - TBA
 
@@ -12,35 +19,41 @@ TODO -
 
 /* Setup */
 
-Object.constructor.prototype.new = function () {
-    var obj = Object.create(this.prototype);
-    this.apply(obj, arguments);
-    return obj;
-};
+
 
 smooth(); // For Firefox users
-textFont(createFont("Tahoma Bold"), 20); // Not availabe on all operating systems
+textFont(createFont("Trebuchet MS"), 20); // Not availabe on all operating systems
 textAlign(CENTER, CENTER);
 frameRate(60);
+
+background(0, 0, 0, 0);
+noStroke();
+for (var i = 0; i < 600; i += 20) {
+    fill(255, 255, 255, 200);
+    ellipse(random(600), i, 5, 5);
+}
+var stars = get();
+
+var buttonTilt = random(ceil(360));
 
 var back_ground = function(){
     noStroke();
     pushMatrix();
     translate(0, 80);
     background(1, 30, 97);
+    for (var i = 0; i < 600; i += 50) {
+        fill(1 + i/10, 30 + i/10, 97 + i/10);
+        rect(0, i, 600, i);
+    }
     fill(255, 255, 255);
-    ellipse(200 + 10, 200, 100, 100);
-    fill(1, 30, 97);
-    ellipse(211 + 13, 200, 100, 100);
-    fill(255, 255, 255, 200);
-    ellipse(285, 200, 5, 5);
-    ellipse(254, 99, 5, 5);
-    ellipse(153, 123, 5, 5);
-    ellipse(92, 220, 5, 5);
-    ellipse(132, 303, 3, 3);
-    ellipse(271, 298, 3, 3);
+    beginShape();
+    vertex(137 + 45, 163);
+    bezierVertex(88 + 45, 233, 136 + 47, 273, 204 + 45, 243);
+    bezierVertex(160 + 45, 240, 121 + 41, 238, 137 + 45, 163);
+    endShape(CLOSE);
+    image(stars, 0, -80);
     pushMatrix();
-    translate(1, 0);
+    translate(0, 0);
     ellipse(80, 80, 5, 5);
     ellipse(82, 78, 5, 5);
     ellipse(85, 75, 4, 4);
@@ -65,17 +78,7 @@ var back_ground = function(){
     popMatrix();
     popMatrix();
 
-    for(var i = 0; i < 50; i ++) {
-        fill(255, 255, 255, 1.5);
-        ellipse(200, 200, i * 15, i * 15);
-    }
-
-    fill(255, 255, 255, 10);
-    rect(0, 593, 400, 10);
-    rect(0, 584, 400, 16);
-    rect(0, 575, 400, 26);
-
-    fill(0, 0, 0, 10);
+    fill(0, 0, 0, 70);
     rect(0, 0, 400, 600);
 };
 
@@ -135,7 +138,7 @@ var Player = {
     x: 200,
     y: 200,
     w: 20,
-    h: this.w,
+    h: 20,
     health: 360, // 360 = max health
     rotation: 0,
     isAlive: true,
@@ -307,34 +310,36 @@ function Button (X, Y, Width, Height, Text, s) {
     this.hoverDim = 0;
     this.s = s;
 
-    Button.prototype.draw = function() {
-        noStroke();
-        textSize(20);
-        fill(0, 0, 0, 100);
-        rect(this.x, this.y + 3, this.width, this.height, 5);
-        fill(87, 124, 235);
-
-        if (mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height) {
-            this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
-            this.pressed = mp;
-            this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
-        } else {
-            this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
-            this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
-        }
-
-        rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
-        fill(0, 0, 0, this.hoverDim);
-        rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
-
-        textSize(this.s);
-        textAlign(CENTER, CENTER);
-        fill(255, 255, 255);
-        text(this.bText, this.x + this.width / 2, this.y + this.height / 2 - 1 + this.offsetY);
-        textAlign(TOP, LEFT);
-    };
+    
 
 } // Button class used throughout game button elements
+Button.prototype.draw = function() {
+    noStroke();
+    textSize(20);
+    fill(0, 0, 0, 100);
+    rect(this.x, this.y + 3, this.width, this.height, 5);
+    fill(87, 124, 235);
+
+    if (mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height) {
+        this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
+        this.pressed = mp;
+        this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
+    } else {
+        this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
+        this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
+    }
+
+    rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
+    fill(0, 0, 0, this.hoverDim);
+    rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
+
+    textSize(this.s);
+    textAlign(CENTER, CENTER);
+    fill(255, 255, 255);
+    text(this.bText, this.x + this.width / 2, this.y + this.height / 2 - 1 + this.offsetY);
+    textAlign(TOP, LEFT);
+};
+
 function CircleButton (X, Y, r, t, s) {
     this.offsetY = 0;
     this.x = X;
@@ -345,59 +350,59 @@ function CircleButton (X, Y, r, t, s) {
     this.hoverDim = 0;
     this.s = s;
 
-    CircleButton.prototype.draw = function() {
-        noStroke();
-        fill(0, 0, 0, 100);
-        ellipse(this.x, this.y + 3, this.radius * 2, this.radius * 2);
-        fill(87, 124, 235);
-        if (dist(mouseX, mouseY, this.x, this.y) < this.radius) {
-            this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
-            this.pressed = mp;
-            this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
-            if (this.pressed === true) {
-                var localSound = getSound("rpg/metal-clink");
-                localSound.audio.volume = soundVolume;
-                playSound(localSound);
-            }
-        } else {
-            this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
-            this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
-        }
-        ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
-        fill(0, 0, 0, this.hoverDim);
-        ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
-
-        textSize(this.s);
-        textAlign(CENTER, CENTER);
-        fill(255, 255, 255);
-        text(this.bText, this.x, this.y - 1 + this.offsetY);
-        textAlign(TOP, LEFT);
-        noStroke();
-    };
+    
 }
+CircleButton.prototype.draw = function() {
+    noStroke();
+fill(87, 124, 235);
+    if (dist(mouseX, mouseY, this.x, this.y) < this.radius) {
+        this.offsetY = constrain(this.offsetY += 0.4, 0, 3);
+        this.pressed = mp;
+        this.hoverDim = constrain(this.hoverDim += 10, 0, 40);
+        if (mp) {
+            var localSound = getSound("rpg/metal-clink");
+            localSound.audio.volume = soundVolume;
+            playSound(localSound);
+        }
+    } else {
+        this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
+        this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
+    }
+arc(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2, 90 + buttonTilt, 270 + buttonTilt);
+fill(87 + 10, 124 + 10, 235 + 10);
+arc(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2, 270 + buttonTilt, 450 + buttonTilt);
+    fill(0, 0, 0, this.hoverDim);
+    ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
 
-var playButton = CircleButton.new(200, 350, 70, "PLAY", 36); // Creating all the buttons used throughout the game
-var optionsButton = CircleButton.new(120, 460, 50, "OPTIONS", 16);
-var storeButton = CircleButton.new(300 - 20, 460, 50, "STORE", 16);
-var mainMenuButton = CircleButton.new(200, 450, 50, "MENU", 26);
+    textSize(this.s);
+    textAlign(CENTER, CENTER);
+    fill(255, 255, 255);
+    text(this.bText, this.x, this.y - 1 + this.offsetY);
+    textAlign(TOP, LEFT);
+    noStroke();
+};
+var playButton = CircleButton.new(200, 350, 70, "Play", 36); // Creating all the buttons used throughout the game
+var optionsButton = CircleButton.new(120, 460, 50, "Options", 20);
+var storeButton = CircleButton.new(300 - 20, 460, 50, "Store", 20);
+var mainMenuButton = CircleButton.new(200, 450, 50, "Menu", 25);
 
-var drawMenuButtons = false;
+var drawMenuButtons = true;
 
 function menu () {
     backgroundScroll();
 
     textAlign(CENTER, CENTER);
-    textSize(70);
+    textSize(62);
     fill(0, 0, 0, 70);
-    text("DROP", 205, 134 - 30);
-    fill(255, 255, 255);
-    text("DROP", 200, 134 - 30);
+    text("D R O P", 205, 134 - 30);
+    fill(240, 240, 240);
+    text("D R O P", 200, 134 - 30);
     ellipse(229, 136 - 30, 54, 54);
-    textSize(81.5);
+    textSize(87.4);
     fill(0, 0, 0, 70);
-    text("BALL", 205, 202 - 30);
-    fill(255, 255, 255);
-    text("BALL", 200, 202 - 30);
+    text("B A L L", 205, 202 - 30);
+    fill(240, 240, 240);
+    text("B A L L", 200, 202 - 30);
 
     playButton.draw();
     optionsButton.draw();
@@ -566,16 +571,16 @@ function wallCollision (wallData, X) {
 var lastKey = null;
 var canControl = true;
 var keys = []; // Player rotation
-function mousePressed () {
+mousePressed = function () {
     mp = true;
-}
-function keyPressed () {
+};
+keyPressed = function () {
     keys[keyCode] = true;
-}
-function keyReleased () {
+};
+keyReleased = function () {
     keys[keyCode] = false;
-}
-function keyController () {
+};
+var keyController = function () {
     if (keyIsPressed) {
         canControl = true;
     } else {
@@ -614,7 +619,7 @@ function keyController () {
         // If the movement keys are released, slow down the movement, but don't instantly stop it
         Player.speed /= 1.06;
     }
-}
+};
 
 /* Particle System */
 
@@ -1090,7 +1095,7 @@ for (var yloc = 100; yloc < height + distBtwnWalls*2; yloc += distBtwnWalls) {
 
 /* Draw */
 
-function draw () {
+draw = function () {
     screenshaker();
     pushMatrix();
     back_ground();
@@ -1135,4 +1140,5 @@ function draw () {
     mp = false;
     popMatrix();
     transition();
-}
+};
+};
