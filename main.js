@@ -1,13 +1,4 @@
-Object.constructor.prototype.new = function () {
-    var obj = Object.create(this.prototype);
-    this.apply(obj, arguments);
-    return obj;
-};
-
 draw = function () {
-// Started - 08/29/2019 (actually 07/08/2018, but I scrapped the old code)
-// finished - TBA
-
 
 /*
 TODO -
@@ -19,13 +10,18 @@ TODO -
 
 /* Setup */
 
-
+Object.constructor.prototype.new = function () {
+    var obj = Object.create(this.prototype);
+    this.apply(obj, arguments);
+    return obj;
+};
 
 smooth(); // For Firefox users
 textFont(createFont("Trebuchet MS"), 20); // Not availabe on all operating systems
 textAlign(CENTER, CENTER);
 frameRate(60);
 
+//[
 background(0, 0, 0, 0);
 noStroke();
 for (var i = 0; i < 600; i += 20) {
@@ -33,6 +29,106 @@ for (var i = 0; i < 600; i += 20) {
     ellipse(random(600), i, 5, 5);
 }
 var stars = get();
+//] Stars for the background
+
+//[
+noStroke();
+rotate(-45);
+for (var i = 0; i < 255; i += 30) {
+    fill(112 - i/5, 150 - i/5, 255 - i/5);
+    rect(-350, i + 62, 600, i);
+}
+resetMatrix();
+
+var buttonBg = get(75, 100, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(175, 200, 200, 200);
+
+var buttonFrame = get(75, 100, 200, 200);
+
+buttonBg.mask(buttonFrame);
+
+background(0, 0, 0, 0);
+noStroke();
+rotate(-45);
+for (var i = 0; i < 255; i += 20) {
+    fill(112 - i/2, 150 - i/2, 255 - i/2);
+    rect(-350, i + 62, 600, i);
+}
+resetMatrix();
+
+var buttonClassBg = get(75, 100, 70, 30);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+rect(100, 150, 70, 30, 5);
+
+var buttonClassFrame = get(100, 150, 70, 30);
+
+buttonClassBg.mask(buttonClassFrame);
+//] Button(s) masks
+
+//[
+rotate(-45);
+noStroke();
+for (var i = 0; i < 600; i += 40) {
+    fill(245 - i/10, 212 - i/10, 49 - i/10);
+    rect(-221, i, 400, i);
+}
+resetMatrix();
+fill(245, 212, 49);
+ellipse(200, 200, 100, 100);
+
+var coinBg = get(100, 100, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 200, 200, 200);
+
+var coinFrame = get(100, 100, 200, 200);
+
+coinBg.mask(coinFrame);
+//] Coin masks
+
+//[
+noStroke();
+background(0, 14, 173);
+for (var i = 0; i < 600; i += 50) {
+    fill(0 + i/5, 14 + i/5, 173 + i/5);
+    rect(0, i, 400, i);
+}
+fill(35, 217, 47);
+rect(-166, 217, 400, 20, 40);
+rect(-260, 217 + 40, 400, -20, 40);
+rect(-232, 217 + 40, 400, 20, 40);
+rect(-290, 217 + 80, 400, -20, 40);
+rect(-127, 217 + 80, 400, 20, 40);
+rect(217, 217 + 120, 31, -20, 40);
+rect(180, 217 + 120, 400, 20, 40);
+rect(239, 217 + 160, 55, -20, 40);
+rect(109, 217 + 160, 400, 20, 40);
+fill(27, 143, 33);
+rect(252, 217, 400, 20, 40);
+rect(279, 217 + 40, 400, -20, 40);
+rect(198, 217 + 40, 400, 20, 40);
+rect(300, 217 + 80, 400, -20, 40);
+rect(283, 217 + 80, 400, 20, 40);
+rect(-240, 217 + 120, 400, 20, 40);
+
+var player1bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player1frame = get(100, 200, 200, 200);
+
+player1bg.mask(player1frame);
+
+player1bg.mask(player1frame);
+//]  Player 1 masks
 
 var buttonTilt = random(ceil(360));
 
@@ -298,7 +394,7 @@ function logo () {
 
     text("Disco Nugget Development\nAnd\nIsaac Emerald\nPresent...", 200, height/2);
 
-} // Initial splashscreen/logo
+} // Initial splashscreen/logo 
 function Button (X, Y, Width, Height, Text, s) {
     this.offsetY = 0;
     this.x = X;
@@ -329,7 +425,7 @@ Button.prototype.draw = function() {
         this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
     }
 
-    rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
+    image(buttonClassBg, this.x, this.y + this.offsetY, this.width, this.height);
     fill(0, 0, 0, this.hoverDim);
     rect(this.x, this.y + this.offsetY, this.width, this.height, 5);
 
@@ -368,9 +464,7 @@ fill(87, 124, 235);
         this.offsetY = constrain(this.offsetY -= 0.4, 0, 3);
         this.hoverDim = constrain(this.hoverDim -= 10, 0, 40);
     }
-arc(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2, 90 + buttonTilt, 270 + buttonTilt);
-fill(87 + 10, 124 + 10, 235 + 10);
-arc(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2, 270 + buttonTilt, 450 + buttonTilt);
+    image(buttonBg, this.x - this.radius, this.y + this.offsetY - this.radius, this.radius * 2, this.radius * 2);
     fill(0, 0, 0, this.hoverDim);
     ellipse(this.x, this.y + this.offsetY, this.radius * 2, this.radius * 2);
 
@@ -496,8 +590,8 @@ function store () {
     
     // Place holder for coins count
     textAlign(RIGHT, CENTER);
+    image(coinBg, width - 30, 15, 20, 20);
     fill(245, 212, 49);
-    ellipse(width - 20, 25, 20, 20);
     text("142", width - 40, 23);
     
     // Screen title
@@ -542,17 +636,7 @@ function player () {
     pushMatrix();
     translate(Player.x, Player.y);
     rotate(Player.rotation);
-    fill(204, 204, 204);
-    ellipse(0, 0, Player.w, Player.h); // Background
-    fill(255, 255, 255);
-    for (var i = 0; i < 360; i += 60) {
-        arc(0, 0, Player.w, Player.h, i, i + 30); // Spindles
-    }
-    ellipse(0, 0, Player.w / 3, Player.h / 3); // Tire
-    noFill();
-    strokeWeight(3);
-    stroke(255, 255, 255, 150);
-    ellipse(0, 0, Player.w, Player.h);
+    image(player1bg, -Player.w/2, -Player.w/2, Player.w, Player.h);
     popMatrix();
 }
 
@@ -1093,7 +1177,7 @@ for (var yloc = 100; yloc < height + distBtwnWalls*2; yloc += distBtwnWalls) {
     walls[numberWalls++] = createWall(yloc);
 } // Declaring the distance between different walls
 
-/* Draw */
+/* Draw (inside a Draw) */
 
 draw = function () {
     screenshaker();
