@@ -17,7 +17,7 @@ Object.constructor.prototype.new = function () {
 };
 
 smooth(); // For Firefox users
-textFont(createFont("Trebuchet MS"), 20); // Not availabe on all operating systems
+textFont(createFont("Trebuchet MS"), 20);
 textAlign(CENTER, CENTER);
 frameRate(60);
 
@@ -71,23 +71,22 @@ buttonClassBg.mask(buttonClassFrame);
 //] Button(s) masks
 
 //[
-rotate(-45);
 noStroke();
-for (var i = 0; i < 600; i += 40) {
-    fill(245 - i/10, 212 - i/10, 49 - i/10);
-    rect(-221, i, 400, i);
-}
-resetMatrix();
-fill(245, 212, 49);
-ellipse(200, 200, 100, 100);
+fill(255, 238, 0);
+ellipse(200, 300, 250, 250);
 
-var coinBg = get(100, 100, 200, 200);
+for (var i = 0; i < 600; i += 20) {
+    fill(255 - i/2, 238 - i/2, 0 - i/2);
+    ellipse(200, 300, 200 - i, 200 - i);
+}
+
+var coinBg = get(200 - 125, 300 - 125, 250, 250);
 
 background(0, 0, 0);
 fill(255, 255, 255);
-ellipse(200, 200, 200, 200);
+ellipse(200, 300, 250, 250);
 
-var coinFrame = get(100, 100, 200, 200);
+var coinFrame = get(200 - 125, 300 - 125, 250, 250);
 
 coinBg.mask(coinFrame);
 //] Coin masks
@@ -129,6 +128,260 @@ player1bg.mask(player1frame);
 
 player1bg.mask(player1frame);
 //]  Player 1 masks
+
+//[
+noStroke();
+fill(214, 255, 224);
+rect(0, 0, 200, 600);
+fill(196, 245, 207);
+rect(200, 0, 200, 600);
+
+stroke(148, 194, 158);
+strokeWeight(30);
+noFill();
+bezier(120, 208, 158, 252, 216, 239, 376, 189);
+resetMatrix();
+noStroke();
+
+for (var i = 0; i < 600; i++) {
+    var speckSize = random(2, 8);
+    fill(88, 138, 100);
+    ellipse(i * 2, random(600), speckSize, speckSize);
+    ellipse(i * 15, random(600), 26, 7);
+}
+
+fill(127, 184, 139);
+beginShape();
+vertex(88, 282);
+bezierVertex(210, 241, 189, 309, 315, 282);
+vertex(315, 307);
+bezierVertex(257, 285, 300, 346, 88, 303);
+endShape(CLOSE);
+
+stroke(127, 184, 139);
+strokeWeight(15);
+noFill();
+for (var i = 100; i < 500; i += 40) {
+    arc(i, 368, 20, 20, 42, 139);
+    arc(i + 20, 378, 20, 20, 225, 321);
+}
+ 
+stroke(0, 0, 0);
+strokeWeight(1);
+noFill();
+ellipse(200, 300, 200, 200);
+
+var player2bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player2frame = get(100, 200, 200, 200);
+
+player2bg.mask(player2frame);
+//] Player 2 masks
+
+//[
+noStroke();
+fill(127, 195, 250);
+rect(0, 0, 200, 600);
+fill(97, 174, 230);
+rect(200, 0, 200, 600);
+
+stroke(67, 118, 163);
+strokeWeight(15);
+noFill();
+for (var i = 231; i < 500; i += 40) {
+    arc(i, 326, 20, 20, 40, 142);
+    arc(i + 20, 336, 20, 20, 227, 316);
+}
+for (var i = 55; i < 171; i += 40) {
+    arc(i, 277, 20, 20, 40, 142);
+    arc(i + 20, 287, 20, 20, 227, 316);
+}
+for (var i = 250; i < 500; i += 40) {
+    arc(i, 234, 20, 20, 40, 142);
+    arc(i + 20, 244, 20, 20, 227, 316);
+}
+noStroke();
+
+fill(250, 250, 250, 150);
+rect(1, 239 + random(-10, 10), 144, 55, 50);
+fill(74, 138, 184);
+rect(77, 330 + random(-10, 10), 100, 40, 50);
+rect(136, 217 + random(-10, 10), 38, 11, 50);
+rect(245, 264 + random(-10, 10), 100, 40, 50);
+
+for (var i = 0; i < 600; i++) {
+    fill(237, 237, 237);
+    var craterSize = random(10, 30);
+    ellipse(i * 10, random(600), craterSize, craterSize);
+}
+
+var player3bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player3frame = get(100, 200, 200, 200);
+
+background(0, 0, 0, 0);
+
+player3bg.mask(player3frame);
+//] Player 3 masks
+
+//[
+noStroke();
+background(250, 250, 250);
+
+fill(75, 75, 75);
+ellipse(200, 300, 200, 200);
+fill(150, 150, 150);
+ellipse(220, 300, 200, 200);
+
+var player4craterBg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player4craterFrame = get(100, 200, 200, 200);
+
+player4craterBg.mask(player4craterFrame);
+
+background(250, 250, 250);
+
+fill(200, 200, 200);
+ellipse(200, 300, 200, 200);
+fill(230, 230, 230);
+ellipse(170, 300, 200, 200);
+
+image(player4craterBg, 115, 257, 75, 75);
+image(player4craterBg, 191, 216, 15, 15);
+image(player4craterBg, 237, 239, 25, 25);
+image(player4craterBg, 212, 276, 15, 15);
+image(player4craterBg, 275, 294, 15, 15);
+image(player4craterBg, 203, 355, 30, 30);
+var player4bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player4frame = get(100, 200, 200, 200);
+
+player4bg.mask(player4frame);
+//] Player 4 masks
+
+//[
+noStroke();
+fill(224, 77, 67);
+rect(0, 0, 200, 600);
+fill(184, 61, 61);
+rect(200, 0, 200, 600);
+
+stroke(217, 65, 65);
+strokeWeight(23);
+noFill();
+for (var i = 252; i < 500; i += 40) {
+    arc(i, 328, 20, 20, 42, 139);
+    arc(i + 20, 338, 20, 20, 225, 321);
+}
+stroke(184, 63, 63);
+for (var i = 17; i < 167; i += 40) {
+    arc(i, 256, 20, 20, 42, 139);
+    arc(i + 20, 266, 20, 20, 225, 321);
+}
+noStroke();
+fill(138, 36, 36);
+for (var i = 0; i < 600; i++) {
+    var holeSize = random(5, 15);
+    ellipse(i * 10, random(600), holeSize, holeSize);
+}
+ellipse(173, 370, 20, 5);
+ellipse(222, 220, 24, 9);
+for (var i = 0; i < 600; i += random(8, 17)) {
+    stroke(217 - random(50), 65, 65);
+    strokeWeight(random(1, 3));
+    line(0, i, 400, i);
+}
+noStroke();
+fill(217, 65, 65);
+rect(0, 300, 162, 50, 50);
+fill(153, 52, 52);
+rect(234, 209, 162, 50, 50);
+
+noFill();
+strokeWeight(1);
+stroke(0, 0, 0);
+ellipse(200, 300, 200, 200);
+
+var player5bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player5frame = get(100, 200, 200, 200);
+
+player5bg.mask(player5frame);
+//] Player 5 masks
+
+//[
+background(255, 226, 79);
+strokeWeight(26);
+stroke(217, 162, 67);
+for (var j = 0; j < 600; j += 64) {
+    for (var i = 17; i < 433; i += 64) {
+        arc(i, 5 + j, 30, 20, 0, 180);
+        arc(i + 32, 0 + j, 30, 20, 180, 360);
+    }
+}
+noStroke();
+for (var i = 0; i < 600; i++) {
+    var spotSize = random(10, 20);
+    fill(219, 148, 27);
+    ellipse(random(600), i * 5, spotSize, spotSize);
+}
+fill(153, 93, 2);
+rect(0, 0, 75, 600);
+rect(325, 0, 75, 600);
+rect(0, 200, 200, 20, 50);
+rect(0, 240, 141, -20, 50);
+rect(0, 240, 168, 20, 50);
+rect(0, 280, 120, -20, 50);
+rect(0, 280, 157, 20, 50);
+rect(0, 320, 133, -20, 50);
+rect(0, 320, 238, 20, 50);
+rect(0, 360, 173, -20, 50);
+rect(0, 360, 207, 20, 50);
+rect(0, 400, 156, -20, 50);
+rect(0, 400, 200, 20, 50);
+
+rect(236, 200, 600, 20, 50);
+rect(258, 240, 600, -20, 50);
+rect(204, 240, 600, 20, 50);
+rect(278, 280, 600, -20, 50);
+rect(180, 280, 600, 20, 50);
+rect(291, 320, 600, -20, 50);
+rect(264, 320, 600, 20, 50);
+rect(290, 360, 600, -20, 50);
+rect(233, 360, 600, 20, 50);
+rect(268, 400, 600, -20, 50);
+rect(200, 400, 600, 20, 50);
+
+var player6bg = get(100, 200, 200, 200);
+
+background(0, 0, 0);
+fill(255, 255, 255);
+ellipse(200, 300, 200, 200);
+
+var player6frame = get(100, 200, 200, 200);
+
+player6bg.mask(player6frame);
+//] Player 6 masks
 
 var buttonTilt = random(ceil(360));
 
@@ -636,9 +889,9 @@ function player () {
     pushMatrix();
     translate(Player.x, Player.y);
     rotate(Player.rotation);
-    image(player1bg, -Player.w/2, -Player.w/2, Player.w, Player.h);
+    image(player6bg, -Player.w/2, -Player.w/2, Player.w, Player.h);
     popMatrix();
-}
+} // Change player here (only for dev mode)
 
 function wallCollision (wallData, X) {
     var collided = false;
